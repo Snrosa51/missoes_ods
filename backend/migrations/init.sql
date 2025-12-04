@@ -1,0 +1,36 @@
+CREATE DATABASE IF NOT EXISTS ods_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE ods_db;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  passwordHash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'student',
+  createdAt DATETIME,
+  updatedAt DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS missoes (
+  id VARCHAR(50) PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS acoes (
+  id VARCHAR(50) PRIMARY KEY,
+  nome TEXT NOT NULL,
+  missaoId VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS respostas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT,
+  nome VARCHAR(255) NOT NULL,
+  serie VARCHAR(100),
+  missaoId VARCHAR(50),
+  missaoNome VARCHAR(255),
+  acoesJson JSON,
+  pontos INT DEFAULT 0,
+  createdAt DATETIME,
+  updatedAt DATETIME
+);
