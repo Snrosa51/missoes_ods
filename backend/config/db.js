@@ -3,8 +3,7 @@ require('dotenv').config();
 
 // Se existir DATABASE_URL (Railway), usa ela.
 // Caso contrário, usa as variáveis locais do .env
-const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, {
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
       dialect: 'mysql',
       logging: false,
       dialectOptions: {
