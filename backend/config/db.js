@@ -5,13 +5,13 @@ require("dotenv").config();
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-  // Railway → URL completa
+  // Railway → URL do tipo mysql://user:pass@host:port/dbname
   const dbUrl = new URL(process.env.DATABASE_URL);
 
   sequelize = new Sequelize(
-    dbUrl.pathname.substring(1),   // nome do DB
-    dbUrl.username,                // usuário
-    dbUrl.password,                // senha
+    dbUrl.pathname.substring(1), // tira a barra inicial (/)
+    dbUrl.username,
+    dbUrl.password,
     {
       host: dbUrl.hostname,
       port: dbUrl.port || 3306,
@@ -25,7 +25,7 @@ if (process.env.DATABASE_URL) {
 
   console.log("Conectando ao MySQL via DATABASE_URL (Railway)");
 } else {
-  // Ambiente local
+  // Ambiente local (desenvolvimento)
   sequelize = new Sequelize(
     process.env.DB_NAME || "ods_db",
     process.env.DB_USER || "root",
@@ -34,7 +34,7 @@ if (process.env.DATABASE_URL) {
       host: process.env.DB_HOST || "localhost",
       port: process.env.DB_PORT || 3306,
       dialect: "mysql",
-      logging: false,
+      logging: false
     }
   );
 
