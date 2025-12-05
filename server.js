@@ -11,6 +11,8 @@ const apiRoutes = require('./routes/api');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const models = require('./models/index.js');
+
 app.use(cors());
 app.use(express.json());
 
@@ -25,7 +27,6 @@ const seedMissoes = async () => {
   const missoesData = [
     { id: 'ODS3', nome: 'ODS 3 – Saúde e Bem-estar' },
     { id: 'ODS4', nome: 'ODS 4 – Educação de Qualidade' },
-    { id: 'ODS12', nome: 'ODS 12 – Consumo e Produção Responsáveis' }
   ];
   for (const m of missoesData) {
     await Missao.findOrCreate({ where: { id: m.id }, defaults: m });

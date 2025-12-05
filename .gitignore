@@ -1,10 +1,21 @@
-node_modules/
+# Ignorar variáveis de ambiente
 .env
+
+# Ignorar bancos de dados locais
 *.sqlite
 *.db
 
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Node modules
+node_modules/
 backend/node_modules/
 frontend/node_modules/
-*.log
-.DS_Store
-Thumbs.db
+
