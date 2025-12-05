@@ -1,21 +1,44 @@
 // backend/config/db.js
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const { Sequelize } = require("sequelize");
+require("dotenv").config();
 
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_PORT = process.env.DB_PORT || '3306';
-const DB_USER = process.env.DB_USER || 'root';
-const DB_PASS = process.env.DB_PASSWORD || '';
-const DB_NAME = process.env.DB_NAME || 'ods_db';
+let sequelize;
 
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
-  host: DB_HOST,
-  port: DB_PORT,
-  dialect: 'mysql', // se for Postgres: 'postgres'
-  logging: false,
-  define: {
-    timestamps: true
-  }
-});
+if (process.env.DATABASE_URL) {
+  // Railway → URL completa
+  const dbUrl = new URL(process.env.DATABASE_URL);
+
+  sequelize = new Sequelize(
+    dbUrl.pathname.substring(1),   // nome do DB
+    dbUrl.username,                // usuário
+    dbUrl.password,                // senha
+    {
+      host: dbUrl.hostname,
+      port: dbUrl.port || 3306,
+      dialect: "mysql",
+      logging: false,
+      dialectOptions: {
+        ssl: false
+      }
+    }
+  );
+
+  console.log("Conectando ao MySQL via DATABASE_URL (Railway)");
+} else {
+  // Ambiente local
+  sequelize = new Sequelize(
+    process.env.DB_NAME || "ods_db",
+    process.env.DB_USER || "root",
+    process.env.DB_PASSWORD || "",
+    {
+      host: process.env.DB_HOST || "localhost",
+      port: process.env.DB_PORT || 3306,
+      dialect: "mysql",
+      logging: false,
+    }
+  );
+
+  console.log("Conectando ao MySQL local (.env)");
+}
 
 module.exports = sequelize;
