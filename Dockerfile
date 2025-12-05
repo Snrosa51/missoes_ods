@@ -1,20 +1,21 @@
-# Usa uma imagem estável de Node
+# Usar uma versão LTS e estável do Node
 FROM node:18
 
-# Cria o diretório da aplicação
+# Definir diretório de trabalho
 WORKDIR /app
 
-# Copia package.json e package-lock.json
+# Copiar somente package.json e package-lock.json primeiro (melhor cache)
 COPY package*.json ./
 
-# Instala dependências
+# Instalar dependências
 RUN npm install
 
-# Copia o restante do projeto
+# Copiar o restante dos arquivos do backend
 COPY . .
 
-# Exponha a porta que o Railway vai usar
+# Expor a porta que o Railway usa automaticamente
 EXPOSE 4000
 
-# Comando padrão de inicialização
+# Comando para iniciar o servidor
 CMD ["npm", "start"]
+
