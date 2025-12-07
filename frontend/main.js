@@ -16,10 +16,6 @@ const missoes = {
     { id: "A2", nome: "Manter a sala de aula limpa e organizada" },
     { id: "A3", nome: "Não riscar mesas, cadeiras ou paredes" }
   ]},
-  ODS12: { nome: "ODS 12 – Consumo e Produção Responsáveis", acoes: [
-    { id: "B1", nome: "Separar lixo reciclável e orgânico" },
-    { id: "B2", nome: "Reaproveitar papel para rascunho" }
-  ]}
 };
 
 const tokenKey = 'ods_token';
