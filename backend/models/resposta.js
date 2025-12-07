@@ -1,22 +1,34 @@
 // backend/models/resposta.js
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-class Resposta extends Model {}
-
-Resposta.init({
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  userId: { type: DataTypes.INTEGER, allowNull: true },
-  nome: { type: DataTypes.STRING, allowNull: false },
-  serie: { type: DataTypes.STRING, allowNull: true },
-  missaoId: { type: DataTypes.STRING, allowNull: true },
-  missaoNome: { type: DataTypes.STRING, allowNull: true },
-  acoesJson: { type: DataTypes.JSON, allowNull: true },
-  pontos: { type: DataTypes.INTEGER, defaultValue: 0 }
+const Resposta = sequelize.define('Resposta', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  nome: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  serie: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  // guardamos as ações escolhidas como array de ids: ["D1", "D2", ...]
+  acoesJson: {
+    type: DataTypes.JSON,
+    allowNull: false,
+  },
+  pontos: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
-  sequelize,
-  modelName: 'Resposta',
-  tableName: 'respostas'
+  tableName: 'respostas',
 });
 
 module.exports = Resposta;
+
