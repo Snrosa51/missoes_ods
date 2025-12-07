@@ -1,96 +1,149 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard ODS</title>
+<meta charset="UTF-8" />
+<title>Dashboard – Missões ODS</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef1f5;
-  padding: 20px;
-}
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef1f5;
+  }
 
-h1 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #222;
-}
+  header {
+    background: #0057b8;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    font-size: 26px;
+    font-weight: bold;
+  }
 
-.missao {
-  background: white;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 10px;
-  border-left: 6px solid #0077cc;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
+  #conteudo {
+    max-width: 900px;
+    margin: 25px auto;
+  }
 
-.missao:hover {
-  transform: scale(1.01);
-}
+  .missao {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: 0.2s;
+  }
+  .missao:hover {
+    transform: scale(1.01);
+  }
 
-.missao h2 {
-  margin: 0 0 10px 0;
-  color: #0077cc;
-}
+  .titulo-missao {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+  }
 
-.acao {
-  background: #f1f1f1;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 6px;
-  border-left: 4px solid #555;
-}
+  .descricao-missao {
+    font-size: 15px;
+    color: #555;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #0057b8;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .acoes {
+    margin-top: 18px;
+  }
+
+  .acao {
+    background: #f0f3f7;
+    padding: 10px;
+    border-left: 4px solid #0057b8;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  footer {
+    text-align: center;
+    margin: 30px 0;
+    color: #777;
+    font-size: 14px;
+  }
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>Dashboard – Missões (ODS 3 e ODS 4)</h1>
+<header>Dashboard – Missões ODS</header>
 
-<div id="conteudo">Carregando...</div>
+<div id="conteudo">Carregando dados...</div>
+
+<footer>Atualiza automaticamente a cada 10 segundos</footer>
 
 <script>
-async function carregarDados() {
-  const url = "https://missoesods-production.up.railway.app/api/missoes";
+/* 🔗 URL da API – AUTOMÁTICO (Railway ou Local) */
+const API = 
+  location.hostname.includes("localhost")
+    ? "http://localhost:8080/api/missoes"
+    : "https://missoesods-production.up.railway.app/api/missoes";
+
+/* ===============================
+      FUNÇÃO: Carregar Missões
+   =============================== */
+async function carregar() {
+  const div = document.getElementById("conteudo");
+  div.innerHTML = "Atualizando...";
 
   try {
-    const resposta = await fetch(url);
-    const missoes = await resposta.json();
+    const resposta = await fetch(API);
+    const lista = await resposta.json();
 
-    const div = document.getElementById("conteudo");
     div.innerHTML = "";
 
-    missoes.forEach(m => {
+    lista.forEach(m => {
       const bloco = document.createElement("div");
       bloco.className = "missao";
 
       bloco.innerHTML = `
-        <h2>${m.nome}</h2>
-        <h3>Ações:</h3>
-        ${m.acoes && m.acoes.length > 0 
-          ? m.acoes.map(a => `<div class="acao">${a.descricao}</div>`).join("")
-          : "<em>Nenhuma ação cadastrada</em>"
-        }
+        <div class="titulo-missao">${m.titulo}</div>
+        <div class="descricao-missao">${m.descricao}</div>
+        <div class="badge">ODS ${m.odsNumero}</div>
+
+        <div class="acoes">
+          <h4>Ações:</h4>
+          ${m.Acaos.length > 0 
+            ? m.Acaos.map(a => `<div class="acao">${a.descricao}</div>`).join("")
+            : "<em>Nenhuma ação cadastrada.</em>"
+          }
+        </div>
       `;
 
       div.appendChild(bloco);
     });
 
-  } catch (err) {
-    console.error("Erro carregando dados:", err);
-    document.getElementById("conteudo").innerHTML = 
-      "<p style='color:red;'>Erro ao carregar dados da API.</p>";
+  } catch (error) {
+    div.innerHTML = `
+      ❌ Erro ao conectar com a API:<br>
+      <strong>${API}</strong><br><br>
+      Detalhes: ${error}
+    `;
   }
 }
 
-// primeira carga
-carregarDados();
+/* Carrega ao abrir */
+carregar();
 
-// recarrega a cada 15 segundos
-setInterval(carregarDados, 15000);
+/* Atualiza a cada 10 segundos */
+setInterval(carregar, 10000);
 </script>
 
 </body>

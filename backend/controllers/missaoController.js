@@ -1,32 +1,14 @@
-const { Missao, Acao } = require('../models');
+const { Missao, Acao } = require("../models");
 
-module.exports = {
-  async getMissoes(req, res) {
-    try {
-      const missoes = await Missao.findAll({
-        include: { model: Acao }
-      });
-      res.json(missoes);
-    } catch (err) {
-      console.error('Erro ao carregar missões:', err);
-      res.status(500).json({ error: 'Erro ao carregar missões' });
-    }
-  },
+exports.listarMissoes = async (req, res) => {
+  try {
+    const missoes = await Missao.findAll({
+      include: [{ model: Acao }]
+    });
 
-  async getMissaoById(req, res) {
-    try {
-      const missao = await Missao.findByPk(req.params.id, {
-        include: { model: Acao }
-      });
-
-      if (!missao) {
-        return res.status(404).json({ error: "Missão não encontrada" });
-      }
-
-      res.json(missao);
-    } catch (err) {
-      console.error('Erro ao carregar missão:', err);
-      res.status(500).json({ error: 'Erro ao carregar missão' });
-    }
+    res.json(missoes);
+  } catch (err) {
+    console.error("Erro ao listar missões:", err);
+    res.status(500).json({ erro: "Erro ao listar missões" });
   }
 };

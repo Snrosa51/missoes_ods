@@ -1,24 +1,26 @@
 // backend/models/missao.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-const Missao = sequelize.define('Missao', {
+const Missao = sequelize.define("Missao", {
   id: {
     type: DataTypes.INTEGER,
-    primaryKey: true,
     autoIncrement: true,
+    primaryKey: true
   },
   titulo: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false
   },
   descricao: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: DataTypes.TEXT,
+    allowNull: false
   },
-}, {
-  tableName: 'missoes',
-  timestamps: false,
+  odsNumero: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
 });
 
 module.exports = Missao;
+

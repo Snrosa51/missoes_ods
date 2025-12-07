@@ -1,8 +1,10 @@
+// backend/config/db.js
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
 let sequelize;
 
+// Railway — usa DATABASE_URL automaticamente
 if (process.env.DATABASE_URL) {
   console.log("🔗 Usando DATABASE_URL");
 

@@ -1,39 +1,42 @@
-// backend/seed/seedAcoes.js
-const Missao = require('../models/missao');
-const Acao   = require('../models/acao');
+const Acao = require("../models/acao");
+const Missao = require("../models/missao");
 
 module.exports = async () => {
   console.log("Rodando seed das ações...");
 
-  const acoesPorODS = {
-    "ODS 3 – Saúde e Bem-estar": [
-      "Organizar campanha de vacinação",
-      "Promover atividades físicas na escola",
-    ],
-    "ODS 4 – Educação de Qualidade": [
-      "Criar grupo de reforço escolar",
-      "Organizar feira de ciências",
-    ],
-  };
+  const seeds = [
+    {
+      missao: "ODS 3 – Saúde e Bem-estar",
+      acoes: [
+        "Praticar atividade física regularmente",
+        "Beber água todos os dias",
+        "Dormir pelo menos 8 horas"
+      ]
+    },
+    {
+      missao: "ODS 4 – Educação de Qualidade",
+      acoes: [
+        "Ler 30 minutos por dia",
+        "Ajudar um colega nas tarefas",
+        "Participar ativamente nas aulas"
+      ]
+    }
+  ];
 
-  for (const tituloMissao of Object.keys(acoesPorODS)) {
-    const missao = await Missao.findOne({ where: { titulo: tituloMissao } });
+  for (const grupo of seeds) {
+    const missao = await Missao.findOne({ where: { titulo: grupo.missao } });
     if (!missao) continue;
 
-    for (const descricao of acoesPorODS[tituloMissao]) {
+    for (const texto of grupo.acoes) {
       const existe = await Acao.findOne({
-        where: { descricao, missaoId: missao.id },
+        where: { descricao: texto, missaoId: missao.id }
       });
 
       if (!existe) {
-        await Acao.create({
-          descricao,
-          missaoId: missao.id,
-        });
+        await Acao.create({ descricao: texto, missaoId: missao.id });
       }
     }
   }
 
   console.log("Seed de Ações concluído.");
 };
-

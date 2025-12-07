@@ -1,9 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const missaoController = require("../controllers/missaoController");
 
-const missaoController = require('../controllers/missaoController');
-
-router.get('/missoes', missaoController.getMissoes);
-router.get('/missoes/:id', missaoController.getMissaoById);
+router.get("/missoes", missaoController.listarMissoes);
 
 module.exports = router;
