@@ -1,153 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard ODS - Missões e Ações</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<title>Dashboard ODS</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
 
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      padding: 0;
-    }
+h1 {
+  text-align: center;
+  color: #333;
+}
 
-    header {
-      background: #0055aa;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 26px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+.missao {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
 
-    #content {
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 15px;
-    }
-
-    .missao-card {
-      background: white;
-      padding: 18px 22px;
-      border-radius: 14px;
-      margin-bottom: 22px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.08);
-      border-left: 9px solid #0055aa;
-      animation: fadeIn .4s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .missao-titulo {
-      font-size: 22px;
-      font-weight: bold;
-      color: #003b7a;
-      margin-bottom: 6px;
-    }
-
-    .missao-desc {
-      color: #444;
-      margin-bottom: 14px;
-      line-height: 1.4;
-    }
-
-    .acoes-titulo {
-      font-weight: bold;
-      margin-top: 12px;
-      margin-bottom: 6px;
-      color: #222;
-    }
-
-    .acoes-list {
-      margin-left: 20px;
-      padding-left: 0;
-    }
-
-    .acoes-list li {
-      margin-bottom: 4px;
-      color: #333;
-    }
-
-    .loading {
-      font-size: 20px;
-      color: #555;
-      text-align: center;
-      margin-top: 40px;
-    }
-
-    .erro {
-      text-align: center;
-      font-size: 18px;
-      color: red;
-      margin-top: 20px;
-    }
-  </style>
-
+.acao {
+  background: #eaeaea;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 4px;
+}
+</style>
 </head>
 <body>
 
-  <header>Dashboard ODS – Missões e Ações</header>
+<h1>Dashboard – ODS 3 e ODS 4</h1>
+<div id="conteudo"></div>
 
-  <div id="content">
-    <p class="loading">Carregando dados das missões...</p>
-  </div>
+<script>
+async function carregarDados() {
+  const url = "https://missoesods-production.up.railway.app/api/missoes";
 
-  <script>
-    async function carregarDados() {
-      const content = document.getElementById("content");
+  const resposta = await fetch(url);
+  const missoes = await resposta.json();
 
-      try {
-        // Detecta automaticamente se está no Railway ou local
-        const API_URL = window.location.hostname.includes("railway")
-          ? "https://missoesods-production.up.railway.app"
-          : "http://localhost:8080";
+  const div = document.getElementById('conteudo');
+  div.innerHTML = "";
 
-        const res = await fetch(`${API_URL}/api/missoes`);
+  missoes.forEach(m => {
+    const bloco = document.createElement('div');
+    bloco.className = 'missao';
 
-        if (!res.ok) {
-          content.innerHTML = `<p class="erro">Erro ao carregar dados (${res.status})</p>`;
-          return;
-        }
+    bloco.innerHTML = `
+      <h2>${m.titulo}</h2>
+      <p>${m.descricao}</p>
+      <h3>Ações:</h3>
+      ${m.Acaos.map(a => `<div class="acao">${a.descricao}</div>`).join("")}
+    `;
 
-        const missoes = await res.json();
-        content.innerHTML = "";
+    div.appendChild(bloco);
+  });
+}
 
-        missoes.forEach(miss => {
-          const div = document.createElement("div");
-          div.className = "missao-card";
-
-          div.innerHTML = `
-            <div class="missao-titulo">${miss.titulo}</div>
-            <div class="missao-desc">${miss.descricao}</div>
-
-            <div class="acoes-titulo">Ações:</div>
-            <ul class="acoes-list">
-              ${
-                miss.Acaos?.length > 0
-                  ? miss.Acaos.map(a => `<li>${a.descricao}</li>`).join("")
-                  : "<li>Nenhuma ação cadastrada.</li>"
-              }
-            </ul>
-          `;
-
-          content.appendChild(div);
-        });
-
-      } catch (erro) {
-        console.error(erro);
-        content.innerHTML = `<p class="erro">Erro ao conectar à API</p>`;
-      }
-    }
-
-    carregarDados();
-  </script>
+carregarDados();
+setInterval(carregarDados, 15000); // Atualiza a cada 15s
+</script>
 
 </body>
 </html>

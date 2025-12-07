@@ -1,59 +1,52 @@
-// server.js
+// backend/server.js
 const express = require('express');
 const cors = require('cors');
-const sequelize = require('./config/db');
+require('dotenv').config();
 
-const authRoutes = require('./routes/auth');
+const { sequelize } = require('./models');
 const apiRoutes = require('./routes/api');
 
 const seedMissoes = require('./seed/seedMissoes');
 const seedAcoes = require('./seed/seedAcoes');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rotas
-app.use('/auth', authRoutes);
+// Rotas da API
 app.use('/api', apiRoutes);
 
-// Rota raiz para teste rápido
+// Rota inicial
 app.get('/', (req, res) => {
-  res.send('ODS Missões API ativo e rodando!');
+  res.send('API ODS 3 e 4 está funcionando.');
 });
 
-// ===============================
-// FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO
-// ===============================
 const start = async () => {
   try {
-    console.log('Testando conexão com o banco...');
+    console.log('🔄 Testando conexão com o banco...');
     await sequelize.authenticate();
-    console.log('Conexão OK.');
+    console.log('✅ Banco conectado com sucesso.');
 
-    console.log('Sincronizando modelos...');
-    await sequelize.sync();
-    console.log('Modelos sincronizados.');
+    console.log('🔄 Sincronizando modelos...');
+    await sequelize.sync({ alter: false });
+    console.log('✅ Modelos sincronizados.');
 
-    console.log('Fazendo seed das missões...');
+    console.log('🌱 Executando seed de Missões...');
     await seedMissoes();
 
-    console.log('Fazendo seed das ações...');
+    console.log('🌱 Executando seed de Ações...');
     await seedAcoes();
 
-    // ESSENCIAL PARA RAILWAY → NÃO USAR localhost
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
     });
 
   } catch (err) {
-    console.error('ERRO FATAL AO INICIAR O SERVIDOR:', err);
-    process.exit(1); // marca como crashed no Railway para debug
+    console.error('❌ ERRO FATAL AO INICIAR O SERVIDOR:', err);
+    process.exit(1);
   }
 };
 
-// Inicia a aplicação
 start();

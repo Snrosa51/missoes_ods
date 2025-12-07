@@ -1,105 +1,39 @@
-// backend/seed/seedAcoes.js
-
 const Missao = require('../models/missao');
 const Acao = require('../models/acao');
 
 module.exports = async () => {
-  console.log("Rodando seed das ações...");
+  console.log("Rodando seed das ações (ODS 3 e 4)...");
 
-  // Lista de ações por ODS
   const acoesPorODS = {
-    1: [
-      "Criar campanha de arrecadação de roupas",
-      "Organizar doação de alimentos"
+    "ODS 3 – Saúde e Bem-estar": [
+      "Organizar campanha de vacinação",
+      "Criar grupo de caminhada na escola",
+      "Promover ações de saúde mental"
     ],
-    2: [
-      "Montar horta comunitária",
-      "Promover oficina de compostagem"
-    ],
-    3: [
-      "Realizar caminhada de saúde",
-      "Campanha de combate ao sedentarismo"
-    ],
-    4: [
-      "Organizar roda de leitura",
-      "Oficina de reforço escolar"
-    ],
-    5: [
-      "Evento de conscientização sobre igualdade",
-      "Produzir cartazes educativos"
-    ],
-    6: [
-      "Campanha de economia de água",
-      "Mutirão de limpeza de rios"
-    ],
-    7: [
-      "Palestra sobre energia solar",
-      "Criar cartazes de consumo consciente"
-    ],
-    8: [
-      "Feira de profissões",
-      "Oficina de empreendedorismo"
-    ],
-    9: [
-      "Oficina de robótica",
-      "Projeto de construção de protótipos"
-    ],
-    10: [
-      "Debate sobre inclusão social",
-      "Campanha anti preconceito"
-    ],
-    11: [
-      "Mutirão de plantio de árvores",
-      "Mapeamento de áreas públicas"
-    ],
-    12: [
-      "Campanha de reciclagem",
-      "Desafio de lixo zero na escola"
-    ],
-    13: [
-      "Projeto de economia de energia",
-      "Campanha contra queimadas"
-    ],
-    14: [
-      "Limpeza de praias ou rios",
-      "Campanha sobre descarte de plástico"
-    ],
-    15: [
-      "Cuidado com hortas escolares",
-      "Ações sobre preservação da fauna"
-    ],
-    16: [
-      "Mediação de conflitos entre estudantes",
-      "Palestra sobre cidadania"
-    ],
-    17: [
-      "Trabalho em grupos mistos",
-      "Criação de parcerias entre turmas"
-    ],
+    "ODS 4 – Educação de Qualidade": [
+      "Criar grupo de leitura",
+      "Desenvolver tutoria entre alunos",
+      "Organizar feira do conhecimento"
+    ]
   };
 
-  // Busca todas as missões
-  const missoes = await Missao.findAll();
+  for (const tituloMissao of Object.keys(acoesPorODS)) {
+    const missao = await Missao.findOne({ where: { titulo: tituloMissao } });
 
-  // Para cada missão, gerar ações
-  for (const missao of missoes) {
-    const listaAcoes = acoesPorODS[missao.id];
+    if (!missao) continue;
 
-    if (!listaAcoes) continue;
-
-    for (const textoAcao of listaAcoes) {
-      const existe = await Acao.findOne({
-        where: { descricao: textoAcao, missaoId: missao.id }
-      });
+    for (const desc of acoesPorODS[tituloMissao]) {
+      const existe = await Acao.findOne({ where: { descricao: desc, missaoId: missao.id } });
 
       if (!existe) {
         await Acao.create({
-          descricao: textoAcao,
+          descricao: desc,
           missaoId: missao.id
         });
       }
     }
   }
 
-  console.log("Seed de ações finalizado com sucesso.");
+  console.log("Seed de ações concluído.");
 };
+
