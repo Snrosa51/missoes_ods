@@ -1,76 +1,153 @@
-<!-- frontend/dashboard.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Painel ODS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Dashboard ODS - Missões e Ações</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #0055aa;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    #content {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 15px;
+    }
+
+    .missao-card {
+      background: white;
+      padding: 18px 22px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+      border-left: 9px solid #0055aa;
+      animation: fadeIn .4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .missao-titulo {
+      font-size: 22px;
+      font-weight: bold;
+      color: #003b7a;
+      margin-bottom: 6px;
+    }
+
+    .missao-desc {
+      color: #444;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    .acoes-titulo {
+      font-weight: bold;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      color: #222;
+    }
+
+    .acoes-list {
+      margin-left: 20px;
+      padding-left: 0;
+    }
+
+    .acoes-list li {
+      margin-bottom: 4px;
+      color: #333;
+    }
+
+    .loading {
+      font-size: 20px;
+      color: #555;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .erro {
+      text-align: center;
+      font-size: 18px;
+      color: red;
+      margin-top: 20px;
+    }
+  </style>
+
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <nav class="bg-white shadow">
-    <div class="max-w-6xl mx-auto p-4 flex justify-between items-center">
-      <div class="font-bold text-green-700">Missões ODS</div>
-      <div class="flex gap-3">
-        <button id="btnOpenLogin" class="px-3 py-1 bg-green-600 text-white rounded">Login</button>
-        <button id="btnOpenRegister" class="px-3 py-1 bg-blue-600 text-white rounded">Registrar</button>
-      </div>
-    </div>
-  </nav>
+<body>
 
-  <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-    <section class="md:col-span-2 bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-2">Registrar Ações</h2>
+  <header>Dashboard ODS – Missões e Ações</header>
 
-      <label class="block mb-2">
-        Nome:
-        <input id="nome" class="w-full border p-2 rounded mt-1" />
-      </label>
-
-      <label class="block mb-2">
-        Série:
-        <select id="serie" class="w-full border p-2 rounded mt-1">
-          <option value="">Selecione...</option>
-          <option>1º ano</option><option>2º ano</option><option>3º ano</option>
-          <option>4º ano B</option><option>4º ano C</option>
-          <option>5º ano B</option><option>5º ano C</option>
-          <option>6º ano B</option><option>7º ano C</option>
-          <option>8º ano B</option><option>9º ano B</option><option>Convidado Especial</option>
-        </select>
-      </label>
-
-      <div id="acoesContainer" class="mb-4 p-2 border rounded max-h-64 overflow-auto">
-        <!-- Aqui serão geradas as checkboxes via JS -->
-      </div>
-
-      <div class="flex gap-2">
-        <button id="btnEnviar" class="bg-green-600 text-white px-4 py-2 rounded">Registrar</button>
-        <button id="btnRanking" class="bg-gray-700 text-white px-4 py-2 rounded">Carregar Ranking</button>
-      </div>
-
-      <div id="msg" class="mt-3 text-sm text-green-700"></div>
-    </section>
-
-    <aside class="bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-2">Ranking (Top 10)</h3>
-      <div id="rankingList">Clique em "Carregar Ranking"</div>
-    </aside>
-  </main>
-
-  <!-- Modal simples para login/register -->
-  <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
-    <div class="bg-white p-6 rounded w-96">
-      <h4 id="modalTitle" class="text-lg font-semibold mb-4">Login</h4>
-
-      <div id="formContainer">
-        <!-- form será inserido por main.js -->
-      </div>
-
-      <div class="mt-4 flex justify-end gap-2">
-        <button id="btnCloseModal" class="px-3 py-1 bg-gray-300 rounded">Fechar</button>
-      </div>
-    </div>
+  <div id="content">
+    <p class="loading">Carregando dados das missões...</p>
   </div>
 
-  <script src="main.js"></script>
+  <script>
+    async function carregarDados() {
+      const content = document.getElementById("content");
+
+      try {
+        // Detecta automaticamente se está no Railway ou local
+        const API_URL = window.location.hostname.includes("railway")
+          ? "https://missoesods-production.up.railway.app"
+          : "http://localhost:8080";
+
+        const res = await fetch(`${API_URL}/api/missoes`);
+
+        if (!res.ok) {
+          content.innerHTML = `<p class="erro">Erro ao carregar dados (${res.status})</p>`;
+          return;
+        }
+
+        const missoes = await res.json();
+        content.innerHTML = "";
+
+        missoes.forEach(miss => {
+          const div = document.createElement("div");
+          div.className = "missao-card";
+
+          div.innerHTML = `
+            <div class="missao-titulo">${miss.titulo}</div>
+            <div class="missao-desc">${miss.descricao}</div>
+
+            <div class="acoes-titulo">Ações:</div>
+            <ul class="acoes-list">
+              ${
+                miss.Acaos?.length > 0
+                  ? miss.Acaos.map(a => `<li>${a.descricao}</li>`).join("")
+                  : "<li>Nenhuma ação cadastrada.</li>"
+              }
+            </ul>
+          `;
+
+          content.appendChild(div);
+        });
+
+      } catch (erro) {
+        console.error(erro);
+        content.innerHTML = `<p class="erro">Erro ao conectar à API</p>`;
+      }
+    }
+
+    carregarDados();
+  </script>
+
 </body>
 </html>
