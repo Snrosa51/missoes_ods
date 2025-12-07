@@ -7,6 +7,8 @@ if (!process.env.DATABASE_URL) {
   console.error("❌ ERRO: DATABASE_URL não está definida!");
   process.exit(1);
 }
+const dbURL = "mysql://user:password@host:port/database"
+DATABASE_URL = dbURL
 
 console.log("🔍 DATABASE_URL carregada:", process.env.DATABASE_URL);
 

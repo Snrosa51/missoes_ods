@@ -1,5 +1,5 @@
 // frontend/main.js
-const API = "mysql://root:1S4n16dR4*52@mysql.railway.internal:3306/railway"
+const API = "mysql://root:SENHA@mysql.railway.internal:3306/railway"
 // UPDATE para produção
 
 // dados estáticos de missoes/acoes (puxe do backend se preferir)
