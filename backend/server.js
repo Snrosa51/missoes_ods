@@ -1,53 +1,68 @@
 require("dotenv").config();
 const express = require("express");
+const app = express();
 const cors = require("cors");
-const  sequelize  = require("./config/db");
+const sequelize = require("./config/db");
+
+// Rotas da API
 const apiRoutes = require("./routes/api");
-const { Missao, Acao } = require("./models");
-// Seeds
+
+// Seeds (agora manuais)
 const seedMissoes = require("./seed/seedMissoes");
 const seedAcoes = require("./seed/seedAcoes");
 
-const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rotas da API
+// Rotas principais
 app.use("/api", apiRoutes);
 
-// Porta para local e Railway
+// Porta dinâmica do Railway
 const PORT = process.env.PORT || 8080;
 
-const start = async () => {
+async function start() {
   try {
-    console.log("🔗 Carregando configurações do banco...");
+    console.log("🔗 Usando DATABASE_URL");
+    console.log("🔗 Testando conexão...");
 
-    // Testa a conexão
-    console.log("🔄 Testando conexão com o banco...");
     await sequelize.authenticate();
     console.log("✅ Banco conectado.");
 
-    // Sincronização SEM destruir tabelas
-    console.log("🔄 Sincronizando modelos sem alterar tabelas...");
-    await sequelize.sync({ alter: false });
+    console.log("🔄 Sincronizando modelos...");
+    await sequelize.sync(); // sem force, sem alter
     console.log("✅ Modelos sincronizados.");
 
-    // Executa os seeds
-    console.log("🌱 Seed de Missões...");
-    await seedMissoes();
+    // 🚫 SEM SEEDS AUTOMÁTICOS AQUI!
 
-    console.log("🌱 Seed de Ações...");
-    await seedAcoes();
-
-    // Start do servidor
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
     });
 
-  } catch (err) {
-    console.error("❌ ERRO FATAL AO INICIAR O SERVIDOR:", err);
+  } catch (error) {
+    console.error("❌ ERRO FATAL:", error);
     process.exit(1);
   }
-};
+}
 
+// Iniciar servidor
 start();
+
+/* 
+=========================================================
+🟦 ENDPOINT MANUAL PARA RODAR SEEDS
+=========================================================
+*/
+app.post("/admin/seed", async (req, res) => {
+  try {
+    console.log("🌱 Executando SEED manual...");
+
+    await seedMissoes();
+    await seedAcoes();
+
+    res.json({ ok: true, mensagem: "Seeds executados com sucesso." });
+
+  } catch (err) {
+    console.error("❌ ERRO AO RODAR SEED:", err);
+    res.status(500).json({ erro: "Falha ao rodar seeds." });
+  }
+});
