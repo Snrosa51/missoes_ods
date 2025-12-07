@@ -1,102 +1,101 @@
-// backend/server.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+// ================================
+// 📌 Importações principais
+// ================================
+const express = require("express");
+require("dotenv").config();
+const { sequelize } = require("./models"); // Importa o sequelize já configurado
+const path = require("path");
 
-const { sequelize, Resposta } = require('./models');
+const apiRoutes = require("./routes/api");
 
+// ================================
+// 📌 Inicialização do app Express
+// ================================
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 8080;
-const PONTOS_POR_ACAO = Number(process.env.PONTOS_POR_ACAO || 10);
+// ================================
+// 📌 Porta correta (Railway + Local)
+// ================================
+const PORT = process.env.PORT || 4000;
 
-// Rota raiz – teste rápido
-app.get('/', (req, res) => {
-  res.send('API ODS Missões ativa');
-});
+// ================================
+// 📌 Testar conexão com o banco
+// ================================
+async function conectarBanco() {
+  console.log("🔗 Carregando configurações do banco...");
 
-/**
- * POST /api/respostas
- * body: { nome, serie, acoes: ["D1","D2",...] }
- * calcula pontos e grava no banco
- */
-app.post('/api/respostas', async (req, res) => {
   try {
-    const { nome, serie, acoes } = req.body;
-
-    if (!nome || !serie || !Array.isArray(acoes) || acoes.length === 0) {
-      return res.status(400).json({ error: 'nome, serie e acoes são obrigatórios.' });
-    }
-
-    const pontos = acoes.length * PONTOS_POR_ACAO;
-
-    const resposta = await Resposta.create({
-      nome,
-      serie,
-      acoesJson: acoes,
-      pontos,
-    });
-
-    return res.json({
-      id: resposta.id,
-      nome: resposta.nome,
-      serie: resposta.serie,
-      pontos: resposta.pontos,
-    });
-  } catch (err) {
-    console.error('Erro em POST /api/respostas', err);
-    res.status(500).json({ error: 'Erro ao registrar resposta.' });
-  }
-});
-
-/**
- * GET /api/ranking
- * devolve lista ordenada por pontos desc, depois por createdAt asc
- */
-app.get('/api/ranking', async (req, res) => {
-  try {
-    const lista = await Resposta.findAll({
-      order: [
-        ['pontos', 'DESC'],
-        ['createdAt', 'ASC'],
-      ],
-      limit: 100,
-    });
-
-    const plain = lista.map((r) => ({
-      id: r.id,
-      nome: r.nome,
-      serie: r.serie,
-      pontos: r.pontos,
-    }));
-
-    res.json(plain);
-  } catch (err) {
-    console.error('Erro em GET /api/ranking', err);
-    res.status(500).json({ error: 'Erro ao carregar ranking.' });
-  }
-});
-
-const start = async () => {
-  try {
-    console.log('🔗 Testando conexão com o banco...');
     await sequelize.authenticate();
-    console.log('✅ Banco conectado.');
-
-    console.log('🔄 Sincronizando tabela respostas...');
-    await sequelize.sync(); // sem force, sem alter
-    console.log('✅ Tabelas OK.');
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Servidor ouvindo na porta ${PORT}`);
-    });
+    console.log("✅ Banco conectado.");
   } catch (err) {
-    console.error('❌ ERRO FATAL AO INICIAR O SERVIDOR:', err);
+    console.error("❌ ERRO ao conectar banco:", err);
     process.exit(1);
   }
-};
+}
+
+// ================================
+// 📌 Sincronizar modelos (SEM alterar tabelas)
+// ================================
+async function sincronizarModelos() {
+  try {
+    console.log("🔄 Sincronizando modelos sem alterar tabelas...");
+    await sequelize.sync(); // SEM force
+    console.log("✅ Modelos sincronizados.");
+  } catch (err) {
+    console.error("❌ ERRO ao sincronizar modelos:", err);
+    process.exit(1);
+  }
+}
+
+// ================================
+// 📌 Rotas principais
+// ================================
+app.use("/api", apiRoutes);
+
+// ================================
+// 📌 Rota MANUAL para rodar seeds
+// ================================
+app.get("/admin/seed", async (req, res) => {
+  try {
+    console.log("🌱 Executando seeds manualmente...");
+
+    const seedMissoes = require("./seed/seedMissoes");
+    const seedAcoes = require("./seed/seedAcoes");
+
+    await seedMissoes();
+    await seedAcoes();
+
+    res.send("✅ Seeds executados com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao rodar seeds manualmente:", err);
+    res.status(500).send("Erro ao executar seeds.");
+  }
+});
+
+// ================================
+// 📌 Iniciar servidor
+// ================================
+async function start() {
+  await conectarBanco();
+  await sincronizarModelos();
+
+  // Evitar erro EADDRINUSE
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  });
+
+  // Captura erros do servidor (como EADDRINUSE)
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`❌ Porta ${PORT} já está em uso!`);
+      console.error("👉 Solução: matar processo antigo usando:");
+      console.error("   netstat -ano | findstr :4000");
+      console.error("   taskkill /PID NUMERO /F");
+    } else {
+      console.error("❌ Erro no servidor:", err);
+    }
+  });
+}
 
 start();
-
