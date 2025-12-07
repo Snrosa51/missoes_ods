@@ -27,7 +27,7 @@ async function start() {
 
     if (!isProduction) {
       // 🚨 SOMENTE LOCAL — RECRIA TUDO
-      console.log("⚠ APAGANDO E RECRIANDO TODAS AS TABELAS (force:true)...");
+      console.log("⚠ APAGANDO E RECRIANDO TODAS AS TABELAS (alter:true)...");
       await sequelize.sync({ alter: true });
       console.log("✅ Tabelas recriadas do zero.");
 

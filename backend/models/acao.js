@@ -13,8 +13,8 @@ const Acao = sequelize.define('Acao', {
     allowNull: false,
   },
   missaoId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,  // obrigatória
+    type: DataTypes.STRING,
+    allowNull: true,  // obrigatória
   },
 }, {
   tableName: 'acoes',
