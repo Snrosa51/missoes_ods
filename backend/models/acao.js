@@ -10,10 +10,10 @@ const Acao = sequelize.define('Acao', {
   },
   descricao: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   missaoId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.,
     allowNull: false,  // obrigatória
   },
 }, {
