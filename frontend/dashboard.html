@@ -3,66 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard ODS</title>
+
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #f4f4f4;
+  background: #eef1f5;
   padding: 20px;
 }
 
 h1 {
   text-align: center;
-  color: #333;
+  margin-bottom: 25px;
+  color: #222;
 }
 
 .missao {
   background: white;
   padding: 20px;
   margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  border-left: 6px solid #0077cc;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.missao:hover {
+  transform: scale(1.01);
+}
+
+.missao h2 {
+  margin: 0 0 10px 0;
+  color: #0077cc;
 }
 
 .acao {
-  background: #eaeaea;
-  padding: 8px;
-  margin: 5px 0;
-  border-radius: 4px;
+  background: #f1f1f1;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border-left: 4px solid #555;
 }
 </style>
 </head>
+
 <body>
 
-<h1>Dashboard – ODS 3 e ODS 4</h1>
-<div id="conteudo"></div>
+<h1>Dashboard – Missões (ODS 3 e ODS 4)</h1>
+
+<div id="conteudo">Carregando...</div>
 
 <script>
 async function carregarDados() {
-  const url = "https://missoesods-production.up.railway.app";
+  const url = "https://missoesods-production.up.railway.app/api/missoes";
 
-  const resposta = await fetch(url);
-  const missoes = await resposta.json();
+  try {
+    const resposta = await fetch(url);
+    const missoes = await resposta.json();
 
-  const div = document.getElementById('conteudo');
-  div.innerHTML = "";
+    const div = document.getElementById("conteudo");
+    div.innerHTML = "";
 
-  missoes.forEach(m => {
-    const bloco = document.createElement('div');
-    bloco.className = 'missao';
+    missoes.forEach(m => {
+      const bloco = document.createElement("div");
+      bloco.className = "missao";
 
-    bloco.innerHTML = `
-      <h2>${m.titulo}</h2>
-      <p>${m.descricao}</p>
-      <h3>Ações:</h3>
-      ${m.Acaos.map(a => `<div class="acao">${a.descricao}</div>`).join("")}
-    `;
+      bloco.innerHTML = `
+        <h2>${m.nome}</h2>
+        <h3>Ações:</h3>
+        ${m.acoes && m.acoes.length > 0 
+          ? m.acoes.map(a => `<div class="acao">${a.descricao}</div>`).join("")
+          : "<em>Nenhuma ação cadastrada</em>"
+        }
+      `;
 
-    div.appendChild(bloco);
-  });
+      div.appendChild(bloco);
+    });
+
+  } catch (err) {
+    console.error("Erro carregando dados:", err);
+    document.getElementById("conteudo").innerHTML = 
+      "<p style='color:red;'>Erro ao carregar dados da API.</p>";
+  }
 }
 
+// primeira carga
 carregarDados();
-setInterval(carregarDados, 15000); // Atualiza a cada 15s
+
+// recarrega a cada 15 segundos
+setInterval(carregarDados, 15000);
 </script>
 
 </body>
