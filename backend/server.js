@@ -1,42 +1,34 @@
 // backend/server.js
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const { sequelize } = require("./models");
 
-const { sequelize } = require('./models');
-const apiRoutes = require('./routes/api');
-
-const seedMissoes = require('./seed/seedMissoes');
-const seedAcoes = require('./seed/seedAcoes');
+const seedMissoes = require("./seed/seedMissoes");
+const seedAcoes   = require("./seed/seedAcoes");
+const apiRoutes   = require("./routes/api");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-
 app.use(cors());
 app.use(express.json());
+app.use("/api", apiRoutes);
 
-// Rotas da API
-app.use('/api', apiRoutes);
+const PORT = process.env.PORT || 8080;
 
-// Rota inicial
-app.get('/', (req, res) => {
-  res.send('API ODS 3 e 4 está funcionando.');
-});
-
-const start = async () => {
+async function start() {
   try {
-    console.log('🔄 Testando conexão com o banco...');
+    console.log("🔗 Testando conexão com o banco...");
     await sequelize.authenticate();
-    console.log('✅ Banco conectado com sucesso.');
+    console.log("✅ Banco conectado.");
 
-    console.log('🔄 Sincronizando modelos...');
-    await sequelize.sync({ alter: false });
-    console.log('✅ Modelos sincronizados.');
+    console.log("⚠ APAGANDO E RECRIANDO TODAS AS TABELAS (force:true)...");
+    await sequelize.sync({ force: true });
+    console.log("✅ Tabelas recriadas do zero.");
 
-    console.log('🌱 Executando seed de Missões...');
+    console.log("🌱 Seed de Missões...");
     await seedMissoes();
 
-    console.log('🌱 Executando seed de Ações...');
+    console.log("🌱 Seed de Ações...");
     await seedAcoes();
 
     app.listen(PORT, "0.0.0.0", () => {
@@ -44,9 +36,9 @@ const start = async () => {
     });
 
   } catch (err) {
-    console.error('❌ ERRO FATAL AO INICIAR O SERVIDOR:', err);
+    console.error("❌ ERRO FATAL AO INICIAR O SERVIDOR:", err);
     process.exit(1);
   }
-};
+}
 
 start();

@@ -1,18 +1,24 @@
 // backend/models/acao.js
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-class Acao extends Model {}
-
-Acao.init({
-  id: { type: DataTypes.STRING, primaryKey: true },
-  nome: { type: DataTypes.TEXT, allowNull: false },
-  missaoId: { type: DataTypes.STRING, allowNull: false }
+const Acao = sequelize.define('Acao', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  descricao: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  missaoId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,  // obrigatória
+  },
 }, {
-  sequelize,
-  modelName: 'Acao',
   tableName: 'acoes',
-  timestamps: false
+  timestamps: false,
 });
 
 module.exports = Acao;

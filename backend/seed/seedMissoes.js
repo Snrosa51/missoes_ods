@@ -1,3 +1,4 @@
+// backend/seed/seedMissoes.js
 const Missao = require('../models/missao');
 
 module.exports = async () => {
@@ -6,21 +7,20 @@ module.exports = async () => {
   const missoes = [
     {
       titulo: "ODS 3 – Saúde e Bem-estar",
-      descricao: "Promover saúde física e mental para todos."
+      descricao: "Promover saúde e bem-estar para todos.",
     },
     {
       titulo: "ODS 4 – Educação de Qualidade",
-      descricao: "Garantir educação inclusiva, equitativa e de qualidade."
-    }
+      descricao: "Garantir educação de qualidade, inclusiva e equitativa.",
+    },
   ];
 
   for (const m of missoes) {
-    const existente = await Missao.findOne({ where: { titulo: m.titulo } });
-
-    if (!existente) {
+    const existe = await Missao.findOne({ where: { titulo: m.titulo } });
+    if (!existe) {
       await Missao.create(m);
     }
   }
 
-  console.log("Seed de missões concluído.");
+  console.log("Seed de Missões concluído.");
 };
