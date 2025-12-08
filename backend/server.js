@@ -19,7 +19,8 @@ app.get("/", (req, res) => {
 });
 
 // Rotas da API
-app.use("/api", apiRoutes);
+app.use("/api", require("./routes/api"));
+
 
 // 🔧 Rota manual para rodar seeds
 app.get("/admin/seed", async (req, res) => {
