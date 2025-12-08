@@ -2,71 +2,233 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard ODS</title>
+  <title>ODS Missões – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
+      margin: 0;
       padding: 20px;
+      color: #333;
     }
-    h1 { text-align: center; color: #333; }
-    .missao {
-      background: white;
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
       padding: 20px;
       margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
-    .acao {
-      background: #eaeaea;
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
       padding: 8px;
-      margin: 5px 0;
-      border-radius: 4px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .acoes-lista {
+      margin-top: 10px;
+      padding-left: 10px;
+    }
+
+    .acoes-lista label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .acoes-lista input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .botoes {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-registrar {
+      background: #2e7d32;
+      color: #fff;
+    }
+
+    .btn-ranking {
+      background: #1565c0;
+      color: #fff;
+    }
+
+    .btn-recarregar-ods {
+      background: #6a1b9a;
+      color: #fff;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .status.ok {
+      color: #2e7d32;
+    }
+
+    .status.erro {
+      color: #c62828;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .missao-info {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .ods-badge {
+      display: inline-block;
+      background: #ffd54f;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      margin-left: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .botoes {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Dashboard – ODS 3 e ODS 4</h1>
-  <div id="conteudo"></div>
+  <div class="container">
+    <h1>ODS Missões – Dashboard</h1>
 
-  <script>
-    const API =
-      window.location.hostname === "localhost"
-        ? "http://localhost:8080/api/missoes"
-        : "https://missoesods-production.up.railway.app/api/missoes";
+    <!-- Card de registro de ação -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Registrar Ação</h2>
+        <button id="btnRecarregarMissoes" class="btn-recarregar-ods">
+          Recarregar ODS e Ações
+        </button>
+      </div>
 
-    async function carregarDados() {
-      try {
-        const resposta = await fetch(API);
-        if (!resposta.ok) throw new Error("HTTP " + resposta.status);
-        const missoes = await resposta.json();
+      <p>Preencha seus dados, escolha uma missão (ODS) e marque as ações que você realizou.</p>
 
-        const div = document.getElementById("conteudo");
-        div.innerHTML = "";
+      <label for="nome">Seu nome</label>
+      <input type="text" id="nome" placeholder="Digite seu nome completo" />
 
-        missoes.forEach((m) => {
-          const bloco = document.createElement("div");
-          bloco.className = "missao";
-          bloco.innerHTML = `
-            <h2>${m.titulo}</h2>
-            <p>${m.descricao}</p>
-            <h3>Ações:</h3>
-            ${(m.Acaos || [])
-              .map((a) => `<div class="acao">${a.descricao}</div>`)
-              .join("")}
-          `;
-          div.appendChild(bloco);
-        });
-      } catch (err) {
-        console.error("Erro ao carregar missões:", err);
-        document.getElementById("conteudo").innerText =
-          "Erro ao carregar dados. Veja o console.";
-      }
-    }
+      <label for="serie">Série / Turma</label>
+      <input type="text" id="serie" placeholder="Ex: 7º ano A" />
 
-    carregarDados();
-    setInterval(carregarDados, 15000);
-  </script>
+      <label for="missaoSelect">Missão (ODS)</label>
+      <select id="missaoSelect">
+        <option value="">Carregando missões...</option>
+      </select>
+
+      <div id="missaoDetalhes" class="missao-info"></div>
+
+      <label>Ações realizadas</label>
+      <div id="listaAcoes" class="acoes-lista">
+        <!-- checkboxes criadas via JS -->
+      </div>
+
+      <div class="botoes">
+        <button id="btnRegistrar" class="btn-registrar">
+          Registrar Ação
+        </button>
+        <button id="btnMostrarRanking" class="btn-ranking">
+          Ver Ranking
+        </button>
+      </div>
+
+      <div id="statusRegistro" class="status"></div>
+    </div>
+
+    <!-- Card de ranking -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Ranking de Pontos</h2>
+      </div>
+      <p>Veja a classificação por pontos. Quem registra mais ações, sobe no ranking.</p>
+
+      <div id="rankingConteudo">Carregando ranking...</div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
 </body>
 </html>
 
