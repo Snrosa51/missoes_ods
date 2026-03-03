@@ -3,8 +3,11 @@ const express = require("express");
 const router = express.Router();
 
 const adminController = require("../controllers/adminController");
+const seedController = require("../controllers/seedController");
+const { listarMissoes } = require("../controllers/missoes");
 
 router.get("/admin/drop-tables", adminController.dropInvalidTables);
+router.post("/admin/seed", seedController.executarSeeds);
 
 
 const { listarMissoes } = require("../controllers/missoes");
