@@ -4,7 +4,7 @@ const { Missao, Acao } = require("../models");
 async function listarMissoes(req, res) {
   try {
     const missoes = await Missao.findAll({
-      include: [{ model: Acao, as: "Acaos" }],
+      include: [{ model: Acao, as: "Acoes" }],
       order: [
         ["odsNumero", "ASC"],
         ["id", "ASC"],
