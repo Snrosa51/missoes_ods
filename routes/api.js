@@ -9,9 +9,6 @@ const { listarMissoes } = require("../controllers/missoes");
 router.get("/admin/drop-tables", adminController.dropInvalidTables);
 router.post("/admin/seed", seedController.executarSeeds);
 
-
-const { listarMissoes } = require("../controllers/missoes");
-
 // GET /api/missoes → lista missões + ações
 router.get("/missoes", listarMissoes);
 
