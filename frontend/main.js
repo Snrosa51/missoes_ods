@@ -5,7 +5,7 @@ const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:8080/api"
-    : "https://missoesods-production.up.railway.app/api"; // troque o domínio se o seu Railway tiver outro nome
+    : "https://missoesods-production.up.railway.app/routers/api"; // troque o domínio se o seu Railway tiver outro nome
 
 let missoesCache = [];
 

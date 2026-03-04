@@ -1,6 +1,6 @@
 // backend/models/resposta.js
 const { DataTypes } = require("sequelize");
-const sequelize = require("./config/db");
+const sequelize = require("../config/db");
 
 const Resposta = sequelize.define(
   "Resposta",
