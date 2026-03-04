@@ -1,6 +1,6 @@
 // backend/models/missao.js
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
+const sequelize = require("./config/db");
 
 const Missao = sequelize.define(
   "missao",

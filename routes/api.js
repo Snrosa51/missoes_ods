@@ -10,7 +10,7 @@ router.get("/admin/drop-tables", adminController.dropInvalidTables);
 router.post("/admin/seed", seedController.executarSeeds);
 
 // GET /api/missoes → lista missões + ações
-router.get("/missoes", listarMissoes);
+router.get("/missao", listarMissoes);
 
 // rota de teste
 router.get("/ping", (req, res) => {
