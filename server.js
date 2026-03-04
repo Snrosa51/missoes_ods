@@ -4,7 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { sequelize } = require("./models");
-const apiRoutes = require("./routes/api");
+const apiRoutes = require("../routes/api");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -19,15 +19,15 @@ app.get("/", (req, res) => {
 });
 
 // Rotas da API
-app.use("api", require("./routes/api"));
+app.use("./api", require("./routes/api"));
 
 
 // 🔧 Rota manual para rodar seeds
 app.get("./seed", async (req, res) => {
   try {
     console.log("🌱 Executando seeds via ./seed ...");
-    const seedMissoes = require("../seed/seedMissoes");
-    const seedAcoes = require("../seed/seedAcoes");
+    const seedMissoes = require("./seed/seedMissoes");
+    const seedAcoes = require("./seed/seedAcoes");
 
     await seedMissoes();
     await seedAcoes();
