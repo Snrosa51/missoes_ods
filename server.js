@@ -2,17 +2,20 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path");
 
 const { sequelize } = require("./models");
 const apiRoutes = require("./routes/api");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-
+  
+app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("API Missões ODS ativa"));
+app.get("/missions", (req, res) => res.redirect("/api/missoes"));
 
 // Base da API
 app.use("/api", apiRoutes);
