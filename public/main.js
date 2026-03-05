@@ -1,11 +1,11 @@
-// frontend/main.js
+// public/main.js
 
 // Detecta se está em localhost ou em produção
 const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:8080/api"
-    : "https://missoesods-production.up.railway.app/routers/api"; // troque o domínio se o seu Railway tiver outro nome
+    : "https://missoesods-production.up.railway.app/api"; // troque o domínio se o seu Railway tiver outro nome
 
 let missoesCache = [];
 
@@ -28,30 +28,27 @@ async function carregarMissoes() {
     missaoDetalhesDiv.textContent = "";
 
     const resp = await fetch(`${API_BASE}/missoes`);
-    if (!resp.ok) {
-      throw new Error("Falha ao buscar /missoes: HTTP " + resp.status);
-    }
+    if (!resp.ok) throw new Error(`Erro ao carregar missões: ${resp.status}`);
 
     const dados = await resp.json();
-    missoesCache = dados;
+    missoesCache = Array.isArray(dados) ? dados : [];
 
-    if (!Array.isArray(missoesCache) || missoesCache.length === 0) {
+    if (missoesCache.length === 0) {
       selMissao.innerHTML = `<option value="">Nenhuma missão disponível</option>`;
       return;
     }
 
-    // Preenche o select
+    // value = id (melhor), texto = nome
     selMissao.innerHTML = `<option value="">Selecione uma missão...</option>`;
-    missoesCache.forEach((m, idx) => {
+    missoesCache.forEach((m) => {
       const opt = document.createElement("option");
-      opt.value = m.titulo;
-      opt.textContent = m.titulo;
+      opt.value = String(m.id);
+      opt.textContent = `${m.codigo || ""} ${m.nome || ""}`.trim();
       selMissao.appendChild(opt);
     });
 
-    statusRegistroDiv.textContent = "";
     statusRegistroDiv.className = "status ok";
-    statusRegistroDiv.textContent = "Missoes carregadas com sucesso.";
+    statusRegistroDiv.textContent = "Missões carregadas com sucesso.";
   } catch (err) {
     console.error("Erro ao carregar missoes:", err);
     selMissao.innerHTML = `<option value="">Erro ao carregar missões</option>`;
@@ -62,27 +59,23 @@ async function carregarMissoes() {
 
 // 2) Renderizar ações ao mudar a missão
 function atualizarAcoesDaMissao() {
-  const tituloSelecionado = selMissao.value;
+  const missaoIdSelecionado = selMissao.value;
   listaAcoesDiv.innerHTML = "";
   missaoDetalhesDiv.textContent = "";
 
-  if (!tituloSelecionado) {
-    return;
-  }
+  if (!missaoIdSelecionado) return;
 
-  const missao = missoesCache.find((m) => m.titulo === tituloSelecionado);
-  if (!missao) {
-    return;
-  }
+  const missao = missoesCache.find((m) => String(m.id) === String(missaoIdSelecionado));
+  if (!missao) return;
 
-  // Mostra detalhes da missão
+  // Detalhes (modo JSON: temos codigo/nome)
   missaoDetalhesDiv.innerHTML = `
-    <strong>Descrição:</strong> ${missao.descricao || ""} 
-    <span class="ods-badge">ODS ${missao.odsNumero || "?"}</span>
+    <strong>Missão:</strong> ${missao.nome || ""} 
+    ${missao.codigo ? `<span class="ods-badge">${missao.codigo}</span>` : ""}
   `;
 
-  // Renderiza checkboxes
-  const acoes = missao.Acaos || [];
+  // Ações vêm de acoes_json
+  const acoes = Array.isArray(missao.acoes_json) ? missao.acoes_json : [];
   if (!acoes.length) {
     listaAcoesDiv.innerHTML = "<em>Não há ações cadastradas para esta missão.</em>";
     return;
@@ -96,10 +89,12 @@ function atualizarAcoesDaMissao() {
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.id = idCheckbox;
-    cb.value = a.descricao;
+
+    // value = ID da ação (D1, E3...)
+    cb.value = a.id;
 
     label.appendChild(cb);
-    label.appendChild(document.createTextNode(a.descricao));
+    label.appendChild(document.createTextNode(a.nome || a.id));
     listaAcoesDiv.appendChild(label);
   });
 }
@@ -108,14 +103,16 @@ function atualizarAcoesDaMissao() {
 async function registrarAcao() {
   const nome = document.getElementById("nome").value.trim();
   const serie = document.getElementById("serie").value.trim();
-  const missaoTitulo = selMissao.value;
+  const missaoId = selMissao.value;
 
   const checkboxes = listaAcoesDiv.querySelectorAll("input[type='checkbox']:checked");
-  const acoes = Array.from(checkboxes).map((cb) => cb.value);
+
+  // enviar como array de objetos {id} (igual ao seu print em respostas.acoes_json)
+  const acoes = Array.from(checkboxes).map((cb) => ({ id: cb.value }));
 
   statusRegistroDiv.className = "status";
 
-  if (!nome || !serie || !missaoTitulo || acoes.length === 0) {
+  if (!nome || !serie || !missaoId || acoes.length === 0) {
     statusRegistroDiv.className = "status erro";
     statusRegistroDiv.textContent =
       "Preencha nome, série, escolha uma missão e ao menos uma ação.";
@@ -129,7 +126,7 @@ async function registrarAcao() {
       body: JSON.stringify({
         nome,
         serie,
-        missaoTitulo,
+        missaoId: Number(missaoId),
         acoes,
       }),
     });
@@ -142,9 +139,8 @@ async function registrarAcao() {
     const json = await resp.json();
 
     statusRegistroDiv.className = "status ok";
-    statusRegistroDiv.textContent = `Resposta registrada! Você ganhou ${json.pontos} pontos.`;
+    statusRegistroDiv.textContent = `Resposta registrada! Você ganhou ${json.pontos ?? "?"} pontos.`;
 
-    // Depois de registrar, recarrega ranking
     carregarRanking();
   } catch (err) {
     console.error("Erro ao registrar resposta:", err);
@@ -153,24 +149,6 @@ async function registrarAcao() {
       "Erro ao registrar resposta. Veja o console para detalhes.";
   }
 }
-
-// 4) Carregar ranking
-async function carregarRanking() {
-  try {
-    rankingConteudoDiv.textContent = "Carregando ranking...";
-
-    const resp = await fetch(`${API_BASE}/ranking`);
-    if (!resp.ok) {
-      throw new Error("Falha ao buscar /ranking: HTTP " + resp.status);
-    }
-
-    const lista = await resp.json();
-
-    if (!Array.isArray(lista) || lista.length === 0) {
-      rankingConteudoDiv.innerHTML = "<em>Nenhuma resposta registrada ainda.</em>";
-      return;
-    }
-
     let html = `
       <table>
         <thead>
@@ -184,7 +162,7 @@ async function carregarRanking() {
         </thead>
         <tbody>
     `;
-
+  try{
     lista.forEach((item, index) => {
       const pos = item.posicao || index + 1;
       html += `
@@ -200,12 +178,13 @@ async function carregarRanking() {
 
     html += "</tbody></table>";
     rankingConteudoDiv.innerHTML = html;
-  } catch (err) {
+   
+   } catch (err) {
     console.error("Erro ao carregar ranking:", err);
     rankingConteudoDiv.innerHTML =
       "<span style='color:#c62828'>Erro ao carregar ranking. Veja o console.</span>";
   }
-}
+
 
 // 5) Listeners
 selMissao.addEventListener("change", atualizarAcoesDaMissao);

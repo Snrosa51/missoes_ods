@@ -13,7 +13,6 @@ router.get("/ping", (req, res) => {
 
 // Missões
 router.get("/missoes", listarMissoes);
-router.get("/missions", listarMissoes); // alias em inglês
 
 
 // para debug e acompanhar nos logs do Railway
