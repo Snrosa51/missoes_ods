@@ -15,7 +15,7 @@ const Acao = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    missaoId: {
+    acoes_json: {
       type: DataTypes.INTEGER,
       FOREIGNKEYS: missions(id),
       allowNull: false,
