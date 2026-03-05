@@ -1,10 +1,11 @@
-// backend/routes/api.js
+// /routes/api.js
 const express = require("express");
 const router = express.Router();
 
 const adminController = require("../controllers/adminController");
 const seedController = require("../controllers/seedController");
 const { listarMissoes } = require("../controllers/missoes");
+const respostasController = require("../controllers/respostasController");
 
 // Health
 router.get("/ping", (req, res) => {
@@ -14,15 +15,20 @@ router.get("/ping", (req, res) => {
 // Missões
 router.get("/missoes", listarMissoes);
 
+// Dashboard
+router.post("/respostas", respostasController.criarResposta);
+router.get("/ranking", respostasController.listarRanking);
 
-// para debug e acompanhar nos logs do Railway
-router.post("/admin/seed", (req,res,next)=>{
-  console.log("ROTA SEED CHAMADA");
-  next();
-}, seedController.executarSeeds);
-
-// Admin (melhor POST para ações destrutivas)
+// Admin
 router.post("/admin/drop-tables", adminController.dropInvalidTables);
-router.post("/admin/seed", seedController.executarSeeds);
 
-module.exports = router;  
+router.post(
+  "/admin/seed",
+  (req, res, next) => {
+    console.log("ROTA SEED CHAMADA");
+    next();
+  },
+  seedController.executarSeeds
+);
+
+module.exports = router;
