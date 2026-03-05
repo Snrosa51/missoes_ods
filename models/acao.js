@@ -1,6 +1,7 @@
 // backend/models/acao.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
+const { FOREIGNKEYS } = require("sequelize/lib/query-types");
 
 const Acao = sequelize.define(
   "Acao",
@@ -16,7 +17,7 @@ const Acao = sequelize.define(
     },
     missaoId: {
       type: DataTypes.INTEGER,
-      reference: missions(id),
+      FOREIGNKEYS: missions(id),
       allowNull: false,
     },
   },
