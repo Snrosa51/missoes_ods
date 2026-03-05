@@ -24,7 +24,7 @@ const Missao = sequelize.define(
     },
   },
   {
-    tableName: "missions",
+    tableName: "missoes",
     timestamps: true,
   }
 );

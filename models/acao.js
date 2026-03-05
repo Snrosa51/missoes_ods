@@ -14,6 +14,11 @@ const Acao = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    missaoId: {
+      type: DataTypes.INTEGER,
+      reference: missions(id),
+      allowNull: false,
+    },
   },
   {
     tableName: "acoes",

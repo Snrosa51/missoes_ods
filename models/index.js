@@ -4,18 +4,10 @@ const Missao = require("./missao");
 const Acao = require("./acao");
 const Resposta = require("./resposta");
 
-// Missão 1:N Ações
-Missao.hasMany(Acao, {
-  as: "Acaos", // para bater com m.Acaos no dashboard
-  foreignKey: { name: "missaoId", allowNull: false },
-  onDelete: "CASCADE",
-});
-Acao.belongsTo(Missao, {
-  as: "Missao",
-  foreignKey: { name: "missaoId", allowNull: false },
-});
-
 // Missão 1:N Respostas (se quiser relacionar)
+Missao.hasMany(Acao, { foreignKey: "missaoId", as: "Acoes" });
+Acao.belongsTo(Missao, { foreignKey: "missaoId", as: "Missao" });
+
 Missao.hasMany(Resposta, {
   foreignKey: { name: "missaoId", allowNull: false },
   onDelete: "CASCADE",

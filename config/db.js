@@ -7,7 +7,7 @@ let sequelize;
 if (process.env.DATABASE_URL) {
   console.log("🔗 Usando DATABASE_URL");
   sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: "mysql12",
+    dialect: "mysql",
     logging: false,
   });
 } else {
@@ -19,7 +19,7 @@ if (process.env.DATABASE_URL) {
     {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
-      dialect: "mysql12",
+      dialect: "mysql",
       logging: false,
     }
   );

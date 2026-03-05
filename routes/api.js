@@ -6,15 +6,22 @@ const adminController = require("../controllers/adminController");
 const seedController = require("../controllers/seedController");
 const { listarMissoes } = require("../controllers/missoes");
 
-router.get("/admin/drop-tables", adminController.dropInvalidTables);
-router.post("/admin/seed", seedController.executarSeeds);
-
-// GET /api/missoes → lista missões + ações
-router.get("/missao", listarMissoes);
-
-// rota de teste
+// Health
 router.get("/ping", (req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-module.exports = router;
+// Missões
+router.get("/missoes", listarMissoes);
+
+// para debug e acompanhar nos logs do Railway
+router.post("/admin/seed", (req,res,next)=>{
+  console.log("ROTA SEED CHAMADA");
+  next();
+}, seedController.executarSeeds);
+
+// Admin (melhor POST para ações destrutivas)
+router.post("/admin/drop-tables", adminController.dropInvalidTables);
+router.post("/admin/seed", seedController.executarSeeds);
+
+module.exports = router;  
