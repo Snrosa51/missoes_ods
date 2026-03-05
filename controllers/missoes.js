@@ -1,14 +1,10 @@
 // backend/controllers/missoes.js
-const { Missao, Acao } = require("../models");
+const { Missao } = require("../models");
 
 async function listarMissoes(req, res) {
   try {
     const missoes = await Missao.findAll({
-      include: [{ model: Acao, as: "Acoes" }],
-      order: [
-        ["odsNumero", "ASC"],
-        ["id", "ASC"],
-      ],
+      order: [["id", "ASC"]],
     });
 
     res.json(missoes);

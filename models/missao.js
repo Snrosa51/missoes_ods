@@ -3,29 +3,32 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Missao = sequelize.define(
-  "missao",
+  "Missao",
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    titulo: {
+
+    codigo: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+    },
+
+    nome: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    descricao: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    odsNumero: {
-      type: DataTypes.INTEGER,
+
+    acoes_json: {
+      type: DataTypes.JSON,
       allowNull: false,
     },
   },
   {
-    tableName: "missoes",
-    timestamps: true,
+    tableName: "missions",
+    timestamps: false,
   }
 );
 
