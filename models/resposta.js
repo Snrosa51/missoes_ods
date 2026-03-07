@@ -1,4 +1,3 @@
-// models/resposta.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -34,7 +33,9 @@ const Resposta = sequelize.define(
   },
   {
     tableName: "respostas",
-    timestamps: false,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

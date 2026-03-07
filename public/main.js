@@ -233,7 +233,13 @@ async function carregarRanking() {
     });
 
     if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
+      let detalhe = "";
+      try {
+        detalhe = await resp.text();
+      } catch {
+        detalhe = "";
+      }
+      throw new Error(`HTTP ${resp.status}${detalhe ? ` - ${detalhe}` : ""}`);
     }
 
     const lista = await resp.json();
@@ -250,9 +256,10 @@ async function carregarRanking() {
           <tr>
             <th>Posição</th>
             <th>Nome</th>
-            <th>Série</th>
-            <th>Missão</th>
+            <th>Série / Turma</th>
             <th>Pontos</th>
+            <th>Registros</th>
+            <th>Missões</th>
           </tr>
         </thead>
         <tbody>
@@ -260,23 +267,20 @@ async function carregarRanking() {
 
     lista.forEach((item, index) => {
       const posicao = item.posicao || index + 1;
-
-      const missaoEncontrada =
-        getMissaoById(item.missao_id) ||
-        getMissaoById(item.missaoId) ||
-        null;
-
-      const nomeMissao = missaoEncontrada
-        ? `${missaoEncontrada.codigo || ""} ${missaoEncontrada.nome || ""}`.trim()
-        : item.missaoTitulo || item.missao_nome || `Missão #${item.missao_id || item.missaoId || "?"}`;
+      const nome = item.nome || "-";
+      const serie = item.serie || "-";
+      const pontos = Number(item.pontos || 0);
+      const registros = Number(item.registros || 0);
+      const totalMissoes = Number(item.totalMissoes || 0);
 
       html += `
         <tr>
           <td>${escapeHtml(posicao)}</td>
-          <td>${escapeHtml(item.nome)}</td>
-          <td>${escapeHtml(item.serie)}</td>
-          <td>${escapeHtml(nomeMissao)}</td>
-          <td>${escapeHtml(item.pontos)}</td>
+          <td>${escapeHtml(nome)}</td>
+          <td>${escapeHtml(serie)}</td>
+          <td><strong>${escapeHtml(pontos)}</strong></td>
+          <td>${escapeHtml(registros)}</td>
+          <td>${escapeHtml(totalMissoes)}</td>
         </tr>
       `;
     });
@@ -289,11 +293,13 @@ async function carregarRanking() {
     rankingConteudoDiv.innerHTML = html;
   } catch (err) {
     console.error("Erro ao carregar ranking:", err);
-    rankingConteudoDiv.innerHTML =
-      "<span style='color:#c62828'>Erro ao carregar ranking. Verifique se a rota /api/ranking existe no backend.</span>";
+    rankingConteudoDiv.innerHTML = `
+      <span style="color:#c62828">
+        Erro ao carregar ranking: ${escapeHtml(err.message)}
+      </span>
+    `;
   }
 }
-
 // 5) Eventos
 if (selMissao) selMissao.addEventListener("change", atualizarAcoesDaMissao);
 if (btnRecarregarMissoes) btnRecarregarMissoes.addEventListener("click", carregarMissoes);
