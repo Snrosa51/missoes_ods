@@ -17,11 +17,22 @@ function hojeIntervalo() {
   return { inicio, fim };
 }
 
-function extrairIdsAcoes(acoes) {
+function normalizarAcoes(acoes) {
   if (!Array.isArray(acoes)) return [];
+
   return acoes
-    .map((a) => normalizarTexto(a?.id))
-    .filter(Boolean);
+    .map((a) => ({
+      id: normalizarTexto(a?.id),
+      nome: String(a?.nome || "").trim(),
+    }))
+    .filter((a) => a.id);
+}
+
+function gerarChaveAcoes(acoes) {
+  return normalizarAcoes(acoes)
+    .map((a) => a.id)
+    .sort()
+    .join("|");
 }
 
 async function criarResposta(req, res) {
@@ -49,9 +60,9 @@ async function criarResposta(req, res) {
       return res.status(404).json({ error: "Missão não encontrada." });
     }
 
-    const idsAcoesRecebidas = extrairIdsAcoes(acoes);
+    const acoesRecebidasNormalizadas = normalizarAcoes(acoes);
 
-    if (!idsAcoesRecebidas.length) {
+    if (!acoesRecebidasNormalizadas.length) {
       return res.status(400).json({
         error: "Nenhuma ação válida enviada.",
       });
@@ -59,6 +70,7 @@ async function criarResposta(req, res) {
 
     const { inicio, fim } = hojeIntervalo();
 
+    // Busca todos os registros do mesmo dia para a mesma missão
     const respostasDoDia = await Resposta.findAll({
       where: {
         missao_id: missaoIdNumero,
@@ -69,6 +81,7 @@ async function criarResposta(req, res) {
       order: [["id", "ASC"]],
     });
 
+    // Filtra o mesmo aluno (nome + série, ignorando maiúsculas/minúsculas)
     const respostasMesmoAlunoHoje = respostasDoDia.filter((r) => {
       return (
         normalizarTexto(r.nome) === nomeNormalizado &&
@@ -76,6 +89,34 @@ async function criarResposta(req, res) {
       );
     });
 
+    // 1) Bloqueio de envio exatamente igual no mesmo dia
+    const chaveEnviada = gerarChaveAcoes(acoesRecebidasNormalizadas);
+
+    for (const resposta of respostasMesmoAlunoHoje) {
+      let acoesJson = resposta.acoes_json;
+
+      if (typeof acoesJson === "string") {
+        try {
+          acoesJson = JSON.parse(acoesJson);
+        } catch {
+          acoesJson = [];
+        }
+      }
+
+      const chaveExistente = gerarChaveAcoes(acoesJson);
+
+      if (chaveExistente && chaveExistente === chaveEnviada) {
+        return res.status(200).json({
+          ok: true,
+          pontos: 0,
+          bloqueado: true,
+          message:
+            "Esse mesmo conjunto de ações já foi registrado hoje para esta missão. Registro bloqueado.",
+        });
+      }
+    }
+
+    // 2) Evita pontuar ação repetida da mesma missão no mesmo dia
     const acoesJaRegistradasHoje = new Set();
 
     for (const resposta of respostasMesmoAlunoHoje) {
@@ -97,16 +138,15 @@ async function criarResposta(req, res) {
       }
     }
 
-    const acoesNovas = acoes.filter((acao) => {
-      const id = normalizarTexto(acao?.id);
-      return id && !acoesJaRegistradasHoje.has(id);
+    const acoesNovas = acoesRecebidasNormalizadas.filter((acao) => {
+      return !acoesJaRegistradasHoje.has(acao.id);
     });
 
     if (!acoesNovas.length) {
       return res.status(200).json({
         ok: true,
         pontos: 0,
-        acoesConsideradas: 0,
+        bloqueado: true,
         message:
           "As ações enviadas já foram registradas hoje para esta missão. Nenhum ponto foi somado.",
       });

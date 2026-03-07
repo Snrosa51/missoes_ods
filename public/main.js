@@ -8,6 +8,9 @@ const API_BASE =
 
 let missoesCache = [];
 
+// trava para evitar clique duplo no botão
+let registrandoResposta = false;
+
 // Elementos da página
 const selMissao = document.getElementById("missaoSelect");
 const listaAcoesDiv = document.getElementById("listaAcoes");
@@ -141,6 +144,8 @@ function atualizarAcoesDaMissao() {
 
 // 3) Registrar ação
 async function registrarAcao() {
+  if (registrandoResposta) return;
+
   const nome = inputNome?.value?.trim() || "";
   const serie = inputSerie?.value?.trim() || "";
   const missaoId = selMissao.value;
@@ -162,9 +167,11 @@ async function registrarAcao() {
     return;
   }
 
-  const pontosPrevistos = calcularPontosFrontend(acoes);
-
   try {
+    registrandoResposta = true;
+    btnRegistrar.disabled = true;
+    btnRegistrar.textContent = "Registrando...";
+
     setStatus("ok", "Registrando ação...");
 
     const payload = {
@@ -172,7 +179,6 @@ async function registrarAcao() {
       serie,
       missaoId: Number(missaoId),
       acoes,
-      pontos: pontosPrevistos,
     };
 
     const resp = await fetch(`${API_BASE}/respostas`, {
@@ -184,16 +190,6 @@ async function registrarAcao() {
       body: JSON.stringify(payload),
     });
 
-    if (!resp.ok) {
-      let detalhe = "";
-      try {
-        detalhe = await resp.text();
-      } catch {
-        detalhe = "";
-      }
-      throw new Error(`HTTP ${resp.status}${detalhe ? ` - ${detalhe}` : ""}`);
-    }
-
     let json = {};
     try {
       json = await resp.json();
@@ -201,24 +197,36 @@ async function registrarAcao() {
       json = {};
     }
 
-    const pontosRecebidos =
-      Number(json.pontos) || Number(json.pontosGanhos) || pontosPrevistos;
+    if (!resp.ok) {
+      throw new Error(
+        json?.detalhe || json?.error || `Falha HTTP ${resp.status}`
+      );
+    }
+
+    if (json?.bloqueado) {
+      setStatus("erro", json.message || "Registro repetido bloqueado.");
+      return;
+    }
+
+    const pontosRecebidos = Number(json.pontos || 0);
 
     setStatus(
       "ok",
       `Resposta registrada com sucesso! Você ganhou ${pontosRecebidos} pontos.`
     );
 
-    // Limpa somente as ações marcadas
     checkboxesMarcados.forEach((cb) => {
       cb.checked = false;
     });
 
-    // Atualiza ranking após registrar
     await carregarRanking();
   } catch (err) {
     console.error("Erro ao registrar resposta:", err);
     setStatus("erro", `Erro ao registrar resposta: ${err.message}`);
+  } finally {
+    registrandoResposta = false;
+    btnRegistrar.disabled = false;
+    btnRegistrar.textContent = "Registrar Ação";
   }
 }
 
