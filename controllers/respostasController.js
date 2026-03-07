@@ -59,11 +59,10 @@ async function criarResposta(req, res) {
 
     const { inicio, fim } = hojeIntervalo();
 
-    // Busca registros da mesma missão no dia atual
     const respostasDoDia = await Resposta.findAll({
       where: {
         missao_id: missaoIdNumero,
-        createdAt: {
+        created_at: {
           [Op.between]: [inicio, fim],
         },
       },
@@ -82,7 +81,6 @@ async function criarResposta(req, res) {
     for (const resposta of respostasMesmoAlunoHoje) {
       let acoesJson = resposta.acoes_json;
 
-      // segurança extra caso venha string em vez de array
       if (typeof acoesJson === "string") {
         try {
           acoesJson = JSON.parse(acoesJson);
@@ -155,7 +153,7 @@ async function listarRanking(req, res) {
     //
     // const respostas = await Resposta.findAll({
     //   where: {
-    //     createdAt: {
+    //     created_at: {
     //       [Op.between]: [inicioMes, fimMes],
     //     },
     //   },
