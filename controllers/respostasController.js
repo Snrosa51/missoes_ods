@@ -1,82 +1,76 @@
-// /controllers/respostasController.js
-
-const { sequelize } = require("../models"); // ajuste se seu caminho for diferente
+// controllers/respostasController.js
+const { Resposta, Missao } = require("../models");
 
 function calcularPontos(acoes) {
-  return acoes.length * 10;
+  return Array.isArray(acoes) ? acoes.length * 10 : 0;
 }
 
-exports.criarResposta = async (req, res) => {
+async function criarResposta(req, res) {
   try {
-
-    const { nome, serie, missaoId, acoes } = req.body;
+    const { nome, serie, missaoId, acoes, pontos } = req.body;
 
     if (!nome || !serie || !missaoId || !Array.isArray(acoes) || !acoes.length) {
-      return res.status(400).json({ error: "Dados inválidos." });
+      return res.status(400).json({
+        error: "Dados inválidos. Envie nome, serie, missaoId e acoes."
+      });
     }
 
-    const pontos = calcularPontos(acoes);
+    const missao = await Missao.findByPk(Number(missaoId));
+    if (!missao) {
+      return res.status(404).json({ error: "Missão não encontrada." });
+    }
 
-    await sequelize.query(
-      `
-      INSERT INTO respostas
-      (nome, serie, missao_id, acoes_json, pontos)
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      {
-        replacements: [
-          nome,
-          serie,
-          Number(missaoId),
-          JSON.stringify(acoes),
-          pontos
-        ]
-      }
-    );
+    const pontosCalculados = Number(pontos) || calcularPontos(acoes);
 
-    res.json({
-      ok: true,
-      pontos
+    const resposta = await Resposta.create({
+      nome,
+      serie,
+      missao_id: Number(missaoId),
+      acoes_json: acoes,
+      pontos: pontosCalculados,
     });
 
+    return res.json({
+      ok: true,
+      id: resposta.id,
+      pontos: pontosCalculados,
+    });
   } catch (err) {
-
     console.error("Erro ao registrar resposta:", err);
-
-    res.status(500).json({
+    return res.status(500).json({
       error: "Erro ao registrar resposta."
     });
   }
-};
+}
 
-exports.listarRanking = async (req, res) => {
+async function listarRanking(req, res) {
   try {
+    const respostas = await Resposta.findAll({
+      order: [
+        ["pontos", "DESC"],
+        ["id", "ASC"],
+      ],
+    });
 
-    const [rows] = await sequelize.query(`
-      SELECT
-        id,
-        nome,
-        serie,
-        missao_id,
-        pontos
-      FROM respostas
-      ORDER BY pontos DESC
-      LIMIT 50
-    `);
-
-    const ranking = rows.map((r, i) => ({
-      posicao: i + 1,
-      ...r
+    const lista = respostas.map((item, index) => ({
+      posicao: index + 1,
+      id: item.id,
+      nome: item.nome,
+      serie: item.serie,
+      missao_id: item.missao_id,
+      pontos: item.pontos,
     }));
 
-    res.json(ranking);
-
+    return res.json(lista);
   } catch (err) {
-
     console.error("Erro ao carregar ranking:", err);
-
-    res.status(500).json({
-      error: "Erro ao carregar ranking"
+    return res.status(500).json({
+      error: "Erro ao carregar ranking."
     });
   }
+}
+
+module.exports = {
+  criarResposta,
+  listarRanking,
 };

@@ -1,11 +1,10 @@
 // public/main.js
 
-// Detecta se está em localhost ou em produção
 const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:8080/api"
-    : "https://missoesods-production.up.railway.app/api"; // troque o domínio se o seu Railway tiver outro nome
+    : `${window.location.origin}/api`;
 
 let missoesCache = [];
 
@@ -20,135 +19,231 @@ const btnRecarregarMissoes = document.getElementById("btnRecarregarMissoes");
 const btnRegistrar = document.getElementById("btnRegistrar");
 const btnMostrarRanking = document.getElementById("btnMostrarRanking");
 
+// Campos do formulário
+const inputNome = document.getElementById("nome");
+const inputSerie = document.getElementById("serie");
+
+// Utilitários
+function escapeHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getMissaoById(id) {
+  return missoesCache.find((m) => String(m.id) === String(id));
+}
+
+function calcularPontosFrontend(acoesSelecionadas) {
+  // Regra simples: 10 pontos por ação marcada
+  return Array.isArray(acoesSelecionadas) ? acoesSelecionadas.length * 10 : 0;
+}
+
+function limparAcoes() {
+  listaAcoesDiv.innerHTML = "";
+}
+
+function setStatus(tipo, mensagem) {
+  statusRegistroDiv.className = `status ${tipo}`.trim();
+  statusRegistroDiv.textContent = mensagem;
+}
+
 // 1) Carregar missões do backend
 async function carregarMissoes() {
   try {
     selMissao.innerHTML = `<option value="">Carregando missões...</option>`;
-    listaAcoesDiv.innerHTML = "";
+    limparAcoes();
     missaoDetalhesDiv.textContent = "";
 
-    const resp = await fetch(`${API_BASE}/missoes`);
-    if (!resp.ok) throw new Error(`Erro ao carregar missões: ${resp.status}`);
+    const resp = await fetch(`${API_BASE}/missoes`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Erro ao carregar missões: HTTP ${resp.status}`);
+    }
 
     const dados = await resp.json();
     missoesCache = Array.isArray(dados) ? dados : [];
 
-    if (missoesCache.length === 0) {
+    if (!missoesCache.length) {
       selMissao.innerHTML = `<option value="">Nenhuma missão disponível</option>`;
+      setStatus("erro", "Nenhuma missão encontrada.");
       return;
     }
 
-    // value = id (melhor), texto = nome
     selMissao.innerHTML = `<option value="">Selecione uma missão...</option>`;
-    missoesCache.forEach((m) => {
+
+    missoesCache.forEach((missao) => {
       const opt = document.createElement("option");
-      opt.value = String(m.id);
-      opt.textContent = `${m.codigo || ""} ${m.nome || ""}`.trim();
+      opt.value = String(missao.id);
+      opt.textContent = `${missao.codigo || ""} ${missao.nome || ""}`.trim();
       selMissao.appendChild(opt);
     });
 
-    statusRegistroDiv.className = "status ok";
-    statusRegistroDiv.textContent = "Missões carregadas com sucesso.";
+    setStatus("ok", "Missões carregadas com sucesso.");
   } catch (err) {
-    console.error("Erro ao carregar missoes:", err);
+    console.error("Erro ao carregar missões:", err);
     selMissao.innerHTML = `<option value="">Erro ao carregar missões</option>`;
-    statusRegistroDiv.className = "status erro";
-    statusRegistroDiv.textContent = "Erro ao carregar missões. Veja o console.";
+    setStatus("erro", "Erro ao carregar missões. Veja o console.");
   }
 }
 
-// 2) Renderizar ações ao mudar a missão
+// 2) Atualizar ações da missão selecionada
 function atualizarAcoesDaMissao() {
   const missaoIdSelecionado = selMissao.value;
-  listaAcoesDiv.innerHTML = "";
+  limparAcoes();
   missaoDetalhesDiv.textContent = "";
 
   if (!missaoIdSelecionado) return;
 
-  const missao = missoesCache.find((m) => String(m.id) === String(missaoIdSelecionado));
+  const missao = getMissaoById(missaoIdSelecionado);
   if (!missao) return;
 
-  // Detalhes (modo JSON: temos codigo/nome)
   missaoDetalhesDiv.innerHTML = `
-    <strong>Missão:</strong> ${missao.nome || ""} 
-    ${missao.codigo ? `<span class="ods-badge">${missao.codigo}</span>` : ""}
+    <strong>Missão:</strong> ${escapeHtml(missao.nome || "")}
+    ${missao.codigo ? `<span class="ods-badge">${escapeHtml(missao.codigo)}</span>` : ""}
   `;
 
-  // Ações vêm de acoes_json
   const acoes = Array.isArray(missao.acoes_json) ? missao.acoes_json : [];
+
   if (!acoes.length) {
     listaAcoesDiv.innerHTML = "<em>Não há ações cadastradas para esta missão.</em>";
     return;
   }
 
-  acoes.forEach((a, idx) => {
-    const idCheckbox = `acao_${idx}`;
-    const label = document.createElement("label");
-    label.htmlFor = idCheckbox;
+  acoes.forEach((acao, idx) => {
+    const idCheckbox = `acao_${idx}_${acao.id || idx}`;
+
+    const wrapper = document.createElement("label");
+    wrapper.htmlFor = idCheckbox;
+    wrapper.style.display = "block";
+    wrapper.style.marginBottom = "8px";
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.id = idCheckbox;
+    cb.value = acao.id || "";
+    cb.dataset.nome = acao.nome || "";
 
-    // value = ID da ação (D1, E3...)
-    cb.value = a.id;
+    wrapper.appendChild(cb);
+    wrapper.appendChild(
+      document.createTextNode(` ${acao.nome || acao.id || "Ação sem nome"}`)
+    );
 
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode(a.nome || a.id));
-    listaAcoesDiv.appendChild(label);
+    listaAcoesDiv.appendChild(wrapper);
   });
 }
 
-// 3) Registrar resposta do aluno
+// 3) Registrar ação
 async function registrarAcao() {
-  const nome = document.getElementById("nome").value.trim();
-  const serie = document.getElementById("serie").value.trim();
+  const nome = inputNome?.value?.trim() || "";
+  const serie = inputSerie?.value?.trim() || "";
   const missaoId = selMissao.value;
 
-  const checkboxes = listaAcoesDiv.querySelectorAll("input[type='checkbox']:checked");
+  const checkboxesMarcados = listaAcoesDiv.querySelectorAll(
+    "input[type='checkbox']:checked"
+  );
 
-  // enviar como array de objetos {id} (igual ao seu print em respostas.acoes_json)
-  const acoes = Array.from(checkboxes).map((cb) => ({ id: cb.value }));
+  const acoes = Array.from(checkboxesMarcados).map((cb) => ({
+    id: cb.value,
+    nome: cb.dataset.nome || "",
+  }));
 
-  statusRegistroDiv.className = "status";
-
-  if (!nome || !serie || !missaoId || acoes.length === 0) {
-    statusRegistroDiv.className = "status erro";
-    statusRegistroDiv.textContent =
-      "Preencha nome, série, escolha uma missão e ao menos uma ação.";
+  if (!nome || !serie || !missaoId || !acoes.length) {
+    setStatus(
+      "erro",
+      "Preencha nome, série/turma, escolha uma missão e marque ao menos uma ação."
+    );
     return;
   }
 
+  const pontosPrevistos = calcularPontosFrontend(acoes);
+
   try {
+    setStatus("ok", "Registrando ação...");
+
+    const payload = {
+      nome,
+      serie,
+      missaoId: Number(missaoId),
+      acoes,
+      pontos: pontosPrevistos,
+    };
+
     const resp = await fetch(`${API_BASE}/respostas`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nome,
-        serie,
-        missaoId: Number(missaoId),
-        acoes,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
     if (!resp.ok) {
-      const erro = await resp.json().catch(() => ({}));
-      throw new Error(erro.error || "Falha ao registrar resposta.");
+      let detalhe = "";
+      try {
+        detalhe = await resp.text();
+      } catch {
+        detalhe = "";
+      }
+      throw new Error(`HTTP ${resp.status}${detalhe ? ` - ${detalhe}` : ""}`);
     }
 
-    const json = await resp.json();
+    let json = {};
+    try {
+      json = await resp.json();
+    } catch {
+      json = {};
+    }
 
-    statusRegistroDiv.className = "status ok";
-    statusRegistroDiv.textContent = `Resposta registrada! Você ganhou ${json.pontos ?? "?"} pontos.`;
+    const pontosRecebidos =
+      Number(json.pontos) || Number(json.pontosGanhos) || pontosPrevistos;
 
-    carregarRanking();
+    setStatus(
+      "ok",
+      `Resposta registrada com sucesso! Você ganhou ${pontosRecebidos} pontos.`
+    );
+
+    // Limpa somente as ações marcadas
+    checkboxesMarcados.forEach((cb) => {
+      cb.checked = false;
+    });
+
+    // Atualiza ranking após registrar
+    await carregarRanking();
   } catch (err) {
     console.error("Erro ao registrar resposta:", err);
-    statusRegistroDiv.className = "status erro";
-    statusRegistroDiv.textContent =
-      "Erro ao registrar resposta. Veja o console para detalhes.";
+    setStatus("erro", `Erro ao registrar resposta: ${err.message}`);
   }
 }
+
+// 4) Carregar ranking
+async function carregarRanking() {
+  try {
+    rankingConteudoDiv.innerHTML = "Carregando ranking...";
+
+    const resp = await fetch(`${API_BASE}/ranking`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
+    const lista = await resp.json();
+
+    if (!Array.isArray(lista) || !lista.length) {
+      rankingConteudoDiv.innerHTML =
+        "<em>Nenhum registro encontrado para o ranking.</em>";
+      return;
+    }
+
     let html = `
       <table>
         <thead>
@@ -162,36 +257,50 @@ async function registrarAcao() {
         </thead>
         <tbody>
     `;
-  try{
+
     lista.forEach((item, index) => {
-      const pos = item.posicao || index + 1;
+      const posicao = item.posicao || index + 1;
+
+      const missaoEncontrada =
+        getMissaoById(item.missao_id) ||
+        getMissaoById(item.missaoId) ||
+        null;
+
+      const nomeMissao = missaoEncontrada
+        ? `${missaoEncontrada.codigo || ""} ${missaoEncontrada.nome || ""}`.trim()
+        : item.missaoTitulo || item.missao_nome || `Missão #${item.missao_id || item.missaoId || "?"}`;
+
       html += `
         <tr>
-          <td>${pos}</td>
-          <td>${item.nome}</td>
-          <td>${item.serie}</td>
-          <td>${item.missaoTitulo}</td>
-          <td>${item.pontos}</td>
+          <td>${escapeHtml(posicao)}</td>
+          <td>${escapeHtml(item.nome)}</td>
+          <td>${escapeHtml(item.serie)}</td>
+          <td>${escapeHtml(nomeMissao)}</td>
+          <td>${escapeHtml(item.pontos)}</td>
         </tr>
       `;
     });
 
-    html += "</tbody></table>";
+    html += `
+        </tbody>
+      </table>
+    `;
+
     rankingConteudoDiv.innerHTML = html;
-   
-   } catch (err) {
+  } catch (err) {
     console.error("Erro ao carregar ranking:", err);
     rankingConteudoDiv.innerHTML =
-      "<span style='color:#c62828'>Erro ao carregar ranking. Veja o console.</span>";
+      "<span style='color:#c62828'>Erro ao carregar ranking. Verifique se a rota /api/ranking existe no backend.</span>";
   }
+}
 
+// 5) Eventos
+if (selMissao) selMissao.addEventListener("change", atualizarAcoesDaMissao);
+if (btnRecarregarMissoes) btnRecarregarMissoes.addEventListener("click", carregarMissoes);
+if (btnRegistrar) btnRegistrar.addEventListener("click", registrarAcao);
+if (btnMostrarRanking) btnMostrarRanking.addEventListener("click", carregarRanking);
 
-// 5) Listeners
-selMissao.addEventListener("change", atualizarAcoesDaMissao);
-btnRecarregarMissoes.addEventListener("click", carregarMissoes);
-btnRegistrar.addEventListener("click", registrarAcao);
-btnMostrarRanking.addEventListener("click", carregarRanking);
-
-// 6) Inicialização automática ao abrir o dashboard
-carregarMissoes();
-carregarRanking();
+// 6) Inicialização
+(async function init() {
+  await carregarMissoes();
+})();

@@ -1,15 +1,17 @@
-// backend/models/index.js
+// models/index.js
 const sequelize = require("../config/db");
 const Missao = require("./missao");
 const Resposta = require("./resposta");
 
-
 Missao.hasMany(Resposta, {
-  foreignKey: { name: "missaoId", allowNull: false },
+  foreignKey: "missao_id",
+  sourceKey: "id",
   onDelete: "CASCADE",
 });
+
 Resposta.belongsTo(Missao, {
-  foreignKey: { name: "missaoId", allowNull: false },
+  foreignKey: "missao_id",
+  targetKey: "id",
 });
 
 module.exports = {

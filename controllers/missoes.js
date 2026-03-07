@@ -1,4 +1,4 @@
-// backend/controllers/missoes.js
+// controllers/missoes.js
 const { Missao } = require("../models");
 
 async function listarMissoes(req, res) {
@@ -7,10 +7,10 @@ async function listarMissoes(req, res) {
       order: [["id", "ASC"]],
     });
 
-    res.json(missoes);
+    return res.json(missoes);
   } catch (err) {
     console.error("Erro ao listar missões:", err);
-    res.status(500).json({ error: "Erro ao listar missões" });
+    return res.status(500).json({ error: "Erro ao listar missões" });
   }
 }
 

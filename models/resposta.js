@@ -1,4 +1,4 @@
-// backend/models/resposta.js
+// models/resposta.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -18,25 +18,24 @@ const Resposta = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    missao_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    acoes_json: {
+      type: DataTypes.JSON,
+      allowNull: false,
+    },
     pontos: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-    missaoTitulo: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-    acoesJson: {
-      type: DataTypes.JSON,
-      allowNull: false,
-    },
   },
   {
     tableName: "respostas",
-    timestamps: true,
+    timestamps: false,
   }
 );
 
 module.exports = Resposta;
-
