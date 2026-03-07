@@ -1,5 +1,4 @@
-// controllers/respostasController.js
-const { Resposta, Missao, sequelize } = require("../models");
+const { Resposta, Missao } = require("../models");
 const { Op } = require("sequelize");
 
 const PONTOS_POR_ACAO = 10;
@@ -39,6 +38,12 @@ async function criarResposta(req, res) {
     const serieNormalizada = normalizarTexto(serie);
     const missaoIdNumero = Number(missaoId);
 
+    if (!Number.isInteger(missaoIdNumero) || missaoIdNumero <= 0) {
+      return res.status(400).json({
+        error: "Missão inválida.",
+      });
+    }
+
     const missao = await Missao.findByPk(missaoIdNumero);
     if (!missao) {
       return res.status(404).json({ error: "Missão não encontrada." });
@@ -52,9 +57,9 @@ async function criarResposta(req, res) {
       });
     }
 
-    // Busca registros do mesmo aluno, mesma série e mesma missão no dia atual
     const { inicio, fim } = hojeIntervalo();
 
+    // Busca registros da mesma missão no dia atual
     const respostasDoDia = await Resposta.findAll({
       where: {
         missao_id: missaoIdNumero,
@@ -65,7 +70,6 @@ async function criarResposta(req, res) {
       order: [["id", "ASC"]],
     });
 
-    // Filtra por nome/série normalizados em memória
     const respostasMesmoAlunoHoje = respostasDoDia.filter((r) => {
       return (
         normalizarTexto(r.nome) === nomeNormalizado &&
@@ -73,18 +77,28 @@ async function criarResposta(req, res) {
       );
     });
 
-    // Junta ações já registradas hoje por esse aluno nessa missão
     const acoesJaRegistradasHoje = new Set();
 
     for (const resposta of respostasMesmoAlunoHoje) {
-      const acoesJson = Array.isArray(resposta.acoes_json) ? resposta.acoes_json : [];
+      let acoesJson = resposta.acoes_json;
+
+      // segurança extra caso venha string em vez de array
+      if (typeof acoesJson === "string") {
+        try {
+          acoesJson = JSON.parse(acoesJson);
+        } catch {
+          acoesJson = [];
+        }
+      }
+
+      if (!Array.isArray(acoesJson)) acoesJson = [];
+
       for (const acao of acoesJson) {
         const id = normalizarTexto(acao?.id);
         if (id) acoesJaRegistradasHoje.add(id);
       }
     }
 
-    // Mantém apenas ações ainda não pontuadas hoje nessa missão
     const acoesNovas = acoes.filter((acao) => {
       const id = normalizarTexto(acao?.id);
       return id && !acoesJaRegistradasHoje.has(id);
@@ -94,6 +108,7 @@ async function criarResposta(req, res) {
       return res.status(200).json({
         ok: true,
         pontos: 0,
+        acoesConsideradas: 0,
         message:
           "As ações enviadas já foram registradas hoje para esta missão. Nenhum ponto foi somado.",
       });
@@ -109,7 +124,7 @@ async function criarResposta(req, res) {
       pontos: pontosCalculados,
     });
 
-    return res.json({
+    return res.status(201).json({
       ok: true,
       id: resposta.id,
       pontos: pontosCalculados,
@@ -120,6 +135,7 @@ async function criarResposta(req, res) {
     console.error("Erro ao registrar resposta:", err);
     return res.status(500).json({
       error: "Erro ao registrar resposta.",
+      detalhe: err.message,
     });
   }
 }
@@ -132,8 +148,6 @@ async function listarRanking(req, res) {
 
     // =========================================================
     // RANKING MENSAL (deixe comentado até a hora de ativar)
-    // Quando quiser ativar, substitua o findAll acima por algo
-    // com filtro de createdAt dentro do mês atual.
     //
     // const agora = new Date();
     // const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1, 0, 0, 0, 0);
@@ -149,7 +163,6 @@ async function listarRanking(req, res) {
     // });
     // =========================================================
 
-    // Agrupa aluno ignorando maiúsculas/minúsculas
     const mapaRanking = new Map();
 
     for (const item of respostas) {
@@ -183,13 +196,8 @@ async function listarRanking(req, res) {
         totalMissoes: aluno.missoes.size,
       }))
       .sort((a, b) => {
-        // 1. mais pontos
         if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-
-        // 2. mais registros
         if (b.registros !== a.registros) return b.registros - a.registros;
-
-        // 3. ordem alfabética
         return a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
       })
       .map((aluno, index) => ({
@@ -202,6 +210,7 @@ async function listarRanking(req, res) {
     console.error("Erro ao carregar ranking:", err);
     return res.status(500).json({
       error: "Erro ao carregar ranking.",
+      detalhe: err.message,
     });
   }
 }
